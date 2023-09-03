@@ -17,12 +17,22 @@ MyImage::MyImage()
 	Width = -1;
 	Height = -1;
 	ImagePath[0] = 0;
+	
+	ModifiedData = NULL;
+	ModWidth = -1;
+	ModHeight = -1;
+	Scale = -1;
+	Aliasing = -1;
+	windowOverlay = -1;
+	
 }
 
 MyImage::~MyImage()
 {
 	if ( Data )
 		delete Data;
+	if (ModifiedData)
+		delete ModifiedData;
 }
 
 
@@ -128,7 +138,6 @@ bool MyImage::ReadImage()
 bool MyImage::WriteImage()
 {
 	// Verify ImagePath
-	// Verify ImagePath
 	if (ImagePath[0] == 0 || Width < 0 || Height < 0 )
 	{
 		fprintf(stderr, "Image or Image properties not defined");
@@ -183,22 +192,56 @@ bool MyImage::WriteImage()
 }
 
 
-
-
 // Here is where you would place your code to modify an image
 // eg Filtering, Transformation, Cropping, etc.
 bool MyImage::Modify()
 {
-
 	// TO DO by student
-	
+	//printf("ARGS:\n\tSCALE: %f\n\tALIASING: %i\n\tWINDOW: %i\n", Scale, Aliasing, windowOverlay);
+
+	// Prefilter Image
+	if (Aliasing == 1) {
+
+	}
+
+	// Subsample img and update Data, Width, Height
+	if (Scale != -1) {
+		ModWidth = round(Width * Scale);
+		ModHeight = round(Height * Scale);
+		ModifiedData = new char[ModWidth * ModHeight * 3];
+
+		for (int row = 0; row < ModHeight*3; row+=3) {
+			for (int col = 0; col < ModWidth*3; col+=3) {
+				int modCoord = ((row * Width) + col)/Scale;
+				ModifiedData[(row * ModWidth) + col + 0] = Data[modCoord + 0];
+				ModifiedData[(row * ModWidth) + col + 1] = Data[modCoord + 1];
+				ModifiedData[(row * ModWidth) + col + 2] = Data[modCoord + 2];
+			}
+		}
+
+
+		///*
+		Data = ModifiedData;
+		Width = ModWidth;
+		Height = ModHeight;
+		//*/
+	}
+	else {
+		ModifiedData = Data;
+		ModWidth = Width;
+		ModHeight = Height;
+	}
+
 	// sample operation
+	/*
 	for ( int i=0; i<Width*Height; i++ )
 	{
 		Data[3*i] = 0;
 		Data[3*i+1] = 0;
 
 	}
+	*/
 
 	return false;
+
 }

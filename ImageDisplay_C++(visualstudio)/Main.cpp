@@ -23,6 +23,8 @@ HINSTANCE		hInst;							// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// The title bar text
 
+boolean testImg = true;
+
 // Foward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
@@ -50,20 +52,55 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		return -1;
 	}
 	int cnt=0;
+	/*
 	while (lpCmdLine[cnt]!= ' '&& lpCmdLine[cnt] !=0) {
 		cnt++;
 	}
 	lpCmdLine[cnt] = 0;
 	printf("The first parameter was: %s", lpCmdLine);
+	*/
+
+	printf("The cmd line arg was: %s\n", lpCmdLine);
+	int argsPtr[4] = {-1, -1, -1, -1};
+	int currentArg = 0;
+	int startArg = 0;
+	while (lpCmdLine[cnt] != 0) {
+		if (lpCmdLine[cnt] == ' ') {
+			lpCmdLine[cnt] = 0;
+			argsPtr[currentArg] = startArg;
+			++currentArg;
+			startArg = cnt + 1;
+		}
+		++cnt;
+	}
+	argsPtr[currentArg] = startArg;
+
+	printf("The first parameter was: %s\n", lpCmdLine + argsPtr[0]);
+	if (argsPtr[1] != -1)printf("The second parameter was: %s\n", lpCmdLine + argsPtr[1]);
+	if (argsPtr[2] != -1)printf("The third parameter was: %s\n", lpCmdLine + argsPtr[2]);
+	if (argsPtr[3] != -1)printf("The fourth parameter was: %s\n", lpCmdLine + argsPtr[3]);
+
 
 	// Set up the images
-	int w = 1920;
-	int h = 1080;
-	inImage.setWidth(w);
-	inImage.setHeight(h);
+	if (testImg) {
+		inImage.setWidth(1920);
+		inImage.setHeight(1080);
+	}
+	else {
+		inImage.setWidth(7680);
+		inImage.setHeight(4320);
+	}
 
-	inImage.setImagePath(lpCmdLine);
+	inImage.setImagePath(lpCmdLine + argsPtr[0]);
 	inImage.ReadImage();
+
+	// Modify Image parameters setters
+	if (argsPtr[1] != -1) inImage.setScale(lpCmdLine + argsPtr[1]);
+	if (argsPtr[2] != -1) inImage.setAliasing(lpCmdLine + argsPtr[2]);
+	if (argsPtr[3] != -1) inImage.setWindowOverlay(lpCmdLine + argsPtr[3]);
+
+	inImage.Modify();
+
 
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -180,6 +217,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	RECT rt;
 	GetClientRect(hWnd, &rt);
 
+	//printf("Pring Message: %i\n", message);
 	switch (message) 
 	{
 		case WM_COMMAND:
@@ -205,11 +243,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				hdc = BeginPaint(hWnd, &ps);
 				// TO DO: Add any drawing code here...
+				
+				/*
 				char text[1000];
 				strcpy(text, "The original image is shown as follows. \n");
 				DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
 				strcpy(text, "\nUpdate program with your code to modify input image. \n");
 				DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
+				*/
 
 				BITMAPINFO bmi;
 				CBitmap bitmap;
@@ -223,11 +264,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				bmi.bmiHeader.biSizeImage = inImage.getWidth()*inImage.getHeight();
 
 				SetDIBitsToDevice(hdc,
-								  0,100,inImage.getWidth(),inImage.getHeight(),
+								  0,0,inImage.getWidth(),inImage.getHeight(),
 								  0,0,0,inImage.getHeight(),
 								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
 							   
 				EndPaint(hWnd, &ps);
+
 			}
 			break;
 		case WM_DESTROY:

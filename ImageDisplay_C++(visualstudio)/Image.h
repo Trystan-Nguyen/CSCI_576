@@ -35,6 +35,13 @@ private:
 	int		Height;					// Height of Image
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
+	
+	char*	ModifiedData;
+	int		ModWidth;
+	int		ModHeight;
+	float   Scale;
+	int		Aliasing;
+	int		windowOverlay;
 
 public:
 	// Constructor
@@ -56,6 +63,13 @@ public:
 	int		getHeight() { return Height; };
 	char*	getImageData() { return Data; };
 	char*	getImagePath() { return ImagePath; }
+
+	void	setModImageData(const char* img) { ModifiedData = (char*)img; };
+	int		getModWidth() { return ModWidth; };
+	int		getModHeight() { return ModHeight; };
+	void	setScale(const char* s) { Scale = strtod(s, NULL); };
+	void	setAliasing(const char* s) { Aliasing = atoi(s); };
+	void	setWindowOverlay(const char* s) { windowOverlay = atoi(s); };
 
 	// Input Output operations
 	bool	ReadImage();
