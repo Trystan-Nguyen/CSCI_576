@@ -39,7 +39,7 @@ private:
 	char*	ModifiedData;
 	int		ModWidth;
 	int		ModHeight;
-	float   Scale;
+	double   Scale;
 	int		Aliasing;
 	int		windowOverlay;
 

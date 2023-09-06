@@ -270,11 +270,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							   
 				EndPaint(hWnd, &ps);
 
+				SetWindowPos(hWnd, NULL, 0, 0, inImage.getWidth(), inImage.getHeight()+75,
+					SWP_NOMOVE);
 			}
 			break;
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;
+		case MK_CONTROL: {
+			POINT p;
+			if (GetCursorPos(&p)) {
+				if (ScreenToClient(hWnd, &p)) {
+					printf("X: %ld\tY: %ld\n", p.x, p.y);
+				}
+			}
+			break;
+		}
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
    }

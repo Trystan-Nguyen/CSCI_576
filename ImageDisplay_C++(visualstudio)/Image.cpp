@@ -199,23 +199,45 @@ bool MyImage::Modify()
 	// TO DO by student
 	//printf("ARGS:\n\tSCALE: %f\n\tALIASING: %i\n\tWINDOW: %i\n", Scale, Aliasing, windowOverlay);
 
-	// Prefilter Image
-	if (Aliasing == 1) {
-
-	}
+	
 
 	// Subsample img and update Data, Width, Height
-	if (Scale != -1) {
+	if (Scale > 0) {
 		ModWidth = round(Width * Scale);
 		ModHeight = round(Height * Scale);
 		ModifiedData = new char[ModWidth * ModHeight * 3];
 
-		for (int row = 0; row < ModHeight*3; row+=3) {
-			for (int col = 0; col < ModWidth*3; col+=3) {
-				int modCoord = ((row * Width) + col)/Scale;
-				ModifiedData[(row * ModWidth) + col + 0] = Data[modCoord + 0];
-				ModifiedData[(row * ModWidth) + col + 1] = Data[modCoord + 1];
-				ModifiedData[(row * ModWidth) + col + 2] = Data[modCoord + 2];
+		for (int row = 0; row < ModHeight; ++row) {
+			for (int col = 0; col < ModWidth * 3; col += 3) {
+				if (Aliasing == 0) {
+					int refCoord = ((row * Width * 3) + col) / Scale;
+					ModifiedData[(row * ModWidth * 3) + col + 0] = Data[refCoord + 0];
+					ModifiedData[(row * ModWidth * 3) + col + 1] = Data[refCoord + 1];
+					ModifiedData[(row * ModWidth * 3) + col + 2] = Data[refCoord + 2];
+				}
+				// Use filtered Image (Aliasing)
+				else {
+					long px1 = 0, px2 = 0, px3 = 0;
+					int count = 0;
+
+					int sampleSize = round(1 / (2 * Scale));
+					for (int i = row; i < row + sampleSize && i < Height; ++i) {
+						for (int j = col; j < col + sampleSize*3 && j < Width * 3; j+=3) {
+							int refCoord = ((i * Width * 3) + j) / Scale;
+							if (i > Height || j > Width * 3 || refCoord > Height * Width * 3) {
+								printf("Height: %i \tWidth: %i\n", i, j);
+								break;
+							}
+							px1 += Data[refCoord + 0];
+							px2 += Data[refCoord + 1];
+							px3 += Data[refCoord + 2];
+							++count;
+						}
+					}
+					ModifiedData[(row * ModWidth * 3) + col + 0] = round(px1 / count);
+					ModifiedData[(row * ModWidth * 3) + col + 1] = round(px2 / count);
+					ModifiedData[(row * ModWidth * 3) + col + 2] = round(px3 / count);
+				}
 			}
 		}
 
@@ -226,21 +248,35 @@ bool MyImage::Modify()
 		Height = ModHeight;
 		//*/
 	}
+	// Aliasing w/o scale
+	else if (Aliasing == 1) {
+		ModWidth = Width;
+		ModHeight = Height;
+		ModifiedData = new char[ModWidth * ModHeight * 3];
+
+		for (int row = 0; row < ModHeight; ++row) {
+			for (int col = 0; col < ModWidth * 3; col += 3) {
+				char px1 = 0, px2 = 0, px3 = 0;
+				int sampleSize = ceil(1 / Scale);
+				for (int i = row; i < i + sampleSize && i < Height; ++i) {
+					for (int j = col; col < j + sampleSize && j < Width * 3; j += 3) {
+						int refCoord = ((i * Width * 3) + j) / Scale;
+						px1 += Data[refCoord + 0];
+						px2 += Data[refCoord + 1];
+						px3 += Data[refCoord + 2];
+					}
+				}
+				ModifiedData[(row * ModWidth * 3) + col + 0] = round(px1 / pow(Scale, 2));
+				ModifiedData[(row * ModWidth * 3) + col + 1] = round(px2 / pow(Scale, 2));
+				ModifiedData[(row * ModWidth * 3) + col + 2] = round(px3 / pow(Scale, 2));
+			}
+		}
+	}
 	else {
 		ModifiedData = Data;
 		ModWidth = Width;
 		ModHeight = Height;
 	}
-
-	// sample operation
-	/*
-	for ( int i=0; i<Width*Height; i++ )
-	{
-		Data[3*i] = 0;
-		Data[3*i+1] = 0;
-
-	}
-	*/
 
 	return false;
 
