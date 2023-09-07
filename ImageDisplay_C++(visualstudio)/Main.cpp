@@ -75,10 +75,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	}
 	argsPtr[currentArg] = startArg;
 
-	printf("The first parameter was: %s\n", lpCmdLine + argsPtr[0]);
-	if (argsPtr[1] != -1)printf("The second parameter was: %s\n", lpCmdLine + argsPtr[1]);
-	if (argsPtr[2] != -1)printf("The third parameter was: %s\n", lpCmdLine + argsPtr[2]);
-	if (argsPtr[3] != -1)printf("The fourth parameter was: %s\n", lpCmdLine + argsPtr[3]);
+	//printf("The first parameter was: %s\n", lpCmdLine + argsPtr[0]);
+	//if (argsPtr[1] != -1)printf("The second parameter was: %s\n", lpCmdLine + argsPtr[1]);
+	//if (argsPtr[2] != -1)printf("The third parameter was: %s\n", lpCmdLine + argsPtr[2]);
+	//if (argsPtr[3] != -1)printf("The fourth parameter was: %s\n", lpCmdLine + argsPtr[3]);
 
 
 	// Set up the images
@@ -190,6 +190,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
+   SetWindowPos(hWnd, NULL, 0, 0, inImage.getWidth(), inImage.getHeight() + 60,
+	   SWP_NOMOVE);
+
    return TRUE;
 }
 
@@ -269,9 +272,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
 							   
 				EndPaint(hWnd, &ps);
-
-				SetWindowPos(hWnd, NULL, 0, 0, inImage.getWidth(), inImage.getHeight()+75,
-					SWP_NOMOVE);
 			}
 			break;
 		case WM_DESTROY:

@@ -36,9 +36,9 @@ private:
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
 	
-	char*	ModifiedData;
-	int		ModWidth;
-	int		ModHeight;
+	char*	OriginalData;
+	int		OriginalWidth;
+	int		OriginalHeight;
 	double   Scale;
 	int		Aliasing;
 	int		windowOverlay;
@@ -64,9 +64,8 @@ public:
 	char*	getImageData() { return Data; };
 	char*	getImagePath() { return ImagePath; }
 
-	void	setModImageData(const char* img) { ModifiedData = (char*)img; };
-	int		getModWidth() { return ModWidth; };
-	int		getModHeight() { return ModHeight; };
+	int		getOGWidth() { return OriginalWidth; };
+	int		getOGHeight() { return OriginalHeight; };
 	void	setScale(const char* s) { Scale = strtod(s, NULL); };
 	void	setAliasing(const char* s) { Aliasing = atoi(s); };
 	void	setWindowOverlay(const char* s) { windowOverlay = atoi(s); };
