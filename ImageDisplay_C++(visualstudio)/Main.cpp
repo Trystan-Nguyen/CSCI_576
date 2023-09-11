@@ -52,13 +52,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		return -1;
 	}
 	int cnt=0;
-	/*
-	while (lpCmdLine[cnt]!= ' '&& lpCmdLine[cnt] !=0) {
-		cnt++;
-	}
-	lpCmdLine[cnt] = 0;
-	printf("The first parameter was: %s", lpCmdLine);
-	*/
 
 	printf("The cmd line arg was: %s\n", lpCmdLine);
 	int argsPtr[4] = {-1, -1, -1, -1};
@@ -99,8 +92,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	if (argsPtr[2] != -1) inImage.setAliasing(lpCmdLine + argsPtr[2]);
 	if (argsPtr[3] != -1) inImage.setWindowOverlay(lpCmdLine + argsPtr[3]);
 
+	//--------------------------------------------------------------------
+	//--------------------------------------------------------------------
 	inImage.Modify();
-
+	//inImage.removeAndInterpolate();
+	//--------------------------------------------------------------------
+	//--------------------------------------------------------------------
 
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -196,7 +193,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-
 //
 //  FUNCTION: WndProc(HWND, unsigned, WORD, LONG)
 //
@@ -207,6 +203,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY	- post a quit message and return
 //
 //
+int mouseX = -1;
+int mouseY = -1;
+bool showZoom = false;
+char* subImage = NULL;
+POINT p;
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 // TO DO: part useful to render video frames, may place your own code here in this function
@@ -245,15 +247,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_PAINT:
 			{
 				hdc = BeginPaint(hWnd, &ps);
-				// TO DO: Add any drawing code here...
-				
-				/*
-				char text[1000];
-				strcpy(text, "The original image is shown as follows. \n");
-				DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
-				strcpy(text, "\nUpdate program with your code to modify input image. \n");
-				DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
-				*/
 
 				BITMAPINFO bmi;
 				CBitmap bitmap;
@@ -266,10 +259,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				bmi.bmiHeader.biCompression = BI_RGB;
 				bmi.bmiHeader.biSizeImage = inImage.getWidth()*inImage.getHeight();
 
+				char* img = inImage.getImageData();
+				if (showZoom) {
+					subImage = inImage.getOriginalWindowOverlay(subImage, mouseX, mouseY);
+					img = subImage;
+				}
 				SetDIBitsToDevice(hdc,
-								  0,0,inImage.getWidth(),inImage.getHeight(),
-								  0,0,0,inImage.getHeight(),
-								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
+								  0,0, inImage.getWidth(), inImage.getHeight(),
+								  0,0,0, inImage.getHeight(),
+									img,&bmi,DIB_RGB_COLORS);
+				
 							   
 				EndPaint(hWnd, &ps);
 			}
@@ -277,14 +276,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;
-		case MK_CONTROL: {
-			POINT p;
-			if (GetCursorPos(&p)) {
-				if (ScreenToClient(hWnd, &p)) {
-					printf("X: %ld\tY: %ld\n", p.x, p.y);
+		case WM_KEYDOWN: {
+			if (wParam == 17){
+				if (GetCursorPos(&p)) {
+					if (ScreenToClient(hWnd, &p)) {
+						showZoom = true;
+						if (mouseX != p.x || mouseY != p.y) {
+							mouseX = p.x;
+							mouseY = p.y;
+							RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE | RDW_INTERNALPAINT);
+						}
+						//printf("X: %ld\tY: %ld\n", p.x, p.y);
+					}
 				}
+				break;
 			}
-			break;
+		}
+		case WM_KEYUP: {
+			if (wParam == 17) {
+				showZoom = false;
+				mouseX = -1;
+				mouseY = -1;
+				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE | RDW_INTERNALPAINT);
+				//printf("CTR KeyUp\n");
+			}
 		}
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);

@@ -25,6 +25,7 @@
 #include <tchar.h>
 
 
+
 // Class structure of Image 
 // Use to encapsulate an RGB image
 class MyImage 
@@ -66,16 +67,22 @@ public:
 
 	int		getOGWidth() { return OriginalWidth; };
 	int		getOGHeight() { return OriginalHeight; };
+	int		getScale() { return Scale; };
 	void	setScale(const char* s) { Scale = strtod(s, NULL); };
 	void	setAliasing(const char* s) { Aliasing = atoi(s); };
 	void	setWindowOverlay(const char* s) { windowOverlay = atoi(s); };
+	int		getWindowOverlay() { return windowOverlay; }
+	char* getOriginalData() { return OriginalData; }
 
 	// Input Output operations
 	bool	ReadImage();
+
+	void	removeAndInterpolate();
 	bool	WriteImage();
 
 	// Modifications
 	bool	Modify();
+	char*	getOriginalWindowOverlay(char* subImage, int x, int y);
 
 };
 
