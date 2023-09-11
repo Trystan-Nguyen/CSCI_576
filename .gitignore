@@ -400,3 +400,4 @@ FodyWeavers.xsd
 # Assignment 1 data
 *.jpg
 *.rgb
+*.csv
