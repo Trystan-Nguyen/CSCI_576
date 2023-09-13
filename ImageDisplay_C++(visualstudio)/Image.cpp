@@ -195,7 +195,7 @@ bool MyImage::WriteImage()
 
 int firstPixelVal(int val) {
 	if (val % 3 == 0) return val;
-	else if (val%3/3>=0.5) return val + 3 -(val % 3);
+	else if (double(val%3)/3>=0.5) return val + 3 -(val % 3);
 	else return val - (val % 3);
 	
 }
@@ -222,12 +222,22 @@ bool MyImage::Modify()
 		//printf("NewImage:\n\tWidth: %i\n\tHeight: %i\n", ModWidth, ModHeight);
 		
 		for (int row = 0; row < ModHeight; ++row) {
+			int refRow = round((row / Scale)) * Width * 3;
 			for (int col = 0; col < ModWidth * 3; col += 3) {
-				int refCoord = firstPixelVal(round(col / Scale)) + round((row / Scale)) * Width * 3;
+				int refCol = firstPixelVal(round((col / Scale)));
+				int refCoord = refCol + refRow;
+
 				if (Aliasing == 0) {
-					ModifiedData[(row * ModWidth * 3) + col + 0] = Data[refCoord + 0];
-					ModifiedData[(row * ModWidth * 3) + col + 1] = Data[refCoord + 1];
-					ModifiedData[(row * ModWidth * 3) + col + 2] = Data[refCoord + 2];
+					if (false && col > ModWidth *3*9/10 && row%5==0) {
+						ModifiedData[(row * ModWidth * 3) + col + 0] = 0;
+						ModifiedData[(row * ModWidth * 3) + col + 1] = 0;
+						ModifiedData[(row * ModWidth * 3) + col + 2] = 0;
+					}
+					else {
+						ModifiedData[(row * ModWidth * 3) + col + 0] = Data[refCoord + 0];
+						ModifiedData[(row * ModWidth * 3) + col + 1] = Data[refCoord + 1];
+						ModifiedData[(row * ModWidth * 3) + col + 2] = Data[refCoord + 2];
+					}
 				}
 				else {
 					UINT p1 = 0, p2 = 0, p3 = 0;
@@ -268,13 +278,20 @@ bool MyImage::Modify()
 					ModifiedData[(row * ModWidth * 3) + col + 2] = char(round(p3/sum));
 				}
 			}
+
+			/**
+			for (int j = 0; j < ModHeight; ++j) {
+				for (int i = 3*ModWidth - 15; i < 3*ModWidth; ++i) {
+					ModifiedData[j*ModWidth*3 + i] = 0;
+				}
+			}
+			*/
 		}
 
 		Data = ModifiedData;
 		Width = ModWidth;
 		Height = ModHeight;
 	}
-
 
 	return false;
 
@@ -388,13 +405,13 @@ void MyImage::removeAndInterpolate() {
 				pow(ModifiedData[refCoord + 2] - Data[refCoord + 2], 2);
 
 			errors[pS] += error;
-
 		}
+		errors[pS] = errors[pS]/count;
 
 
 
 
-		if (pS == 10 || pS == 25 || pS == 50) {
+		if ((pS == 10 || pS == 25 || pS == 50) && false) {
 			Data = ModifiedData;
 			char newName[25];
 			sprintf(newName, "Part3Data/IMG_%i.rgb", pS);
@@ -407,10 +424,10 @@ void MyImage::removeAndInterpolate() {
 	}
 
 	FILE* OUT_FILE;
-	OUT_FILE = fopen("Part3Data/IMG_Error.csv", "wb");
+	OUT_FILE = fopen("Part3Data/IMG_Error.txt", "wb");
 	
 	for (int i = 0; i < 51; ++i) {
-		fprintf(OUT_FILE, "%f,\n", errors[i]);
+		fprintf(OUT_FILE, "%f\n", errors[i]);
 	}
 	
 	fclose(OUT_FILE);
