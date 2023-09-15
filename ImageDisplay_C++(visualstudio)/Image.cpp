@@ -199,6 +199,11 @@ int firstPixelVal(int val) {
 	else return val - (val % 3);
 	
 }
+
+int modFour(int w) {
+	if (w % 4 == 0) return w;
+	else return w + 4 - (w % 4);
+}
 // Here is where you would place your code to modify an image
 // eg Filtering, Transformation, Cropping, etc.
 bool MyImage::Modify()
@@ -214,9 +219,9 @@ bool MyImage::Modify()
 
 	// Subsample img and update Data, Width, Height
 	if (Scale > 0 && Scale < 1) {
-		int ModWidth = round(Width * Scale);
+		int ModWidth = modFour(round(Width * Scale));
 		int ModHeight = round(Height * Scale);
-		char* ModifiedData = new char[ModWidth * ModHeight * 3];
+		char* ModifiedData = new char[modFour(ModWidth) * ModHeight * 3];
 
 		//printf("OldImage:\n\tWidth: %i\n\tHeight: %i\n", Width, Height);
 		//printf("NewImage:\n\tWidth: %i\n\tHeight: %i\n", ModWidth, ModHeight);
@@ -228,16 +233,9 @@ bool MyImage::Modify()
 				int refCoord = refCol + refRow;
 
 				if (Aliasing == 0) {
-					if (false && col > ModWidth *3*9/10 && row%5==0) {
-						ModifiedData[(row * ModWidth * 3) + col + 0] = 0;
-						ModifiedData[(row * ModWidth * 3) + col + 1] = 0;
-						ModifiedData[(row * ModWidth * 3) + col + 2] = 0;
-					}
-					else {
-						ModifiedData[(row * ModWidth * 3) + col + 0] = Data[refCoord + 0];
-						ModifiedData[(row * ModWidth * 3) + col + 1] = Data[refCoord + 1];
-						ModifiedData[(row * ModWidth * 3) + col + 2] = Data[refCoord + 2];
-					}
+					ModifiedData[(row * ModWidth * 3) + col + 0] = Data[refCoord + 0];
+					ModifiedData[(row * ModWidth * 3) + col + 1] = Data[refCoord + 1];
+					ModifiedData[(row * ModWidth * 3) + col + 2] = Data[refCoord + 2];
 				}
 				else {
 					UINT p1 = 0, p2 = 0, p3 = 0;
@@ -289,7 +287,7 @@ bool MyImage::Modify()
 		}
 
 		Data = ModifiedData;
-		Width = ModWidth;
+		Width = modFour(ModWidth);
 		Height = ModHeight;
 	}
 
