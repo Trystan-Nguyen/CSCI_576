@@ -250,12 +250,12 @@ bool MyImage::Modify()
 					};
 					
 
-					for (int i = -1; i < 2; ++i) {
+					for (int i = -2; i <= 2; ++i) {
 						int newRow = row + i;
 						if (newRow < 0) continue;
 						else if (newRow >= ModHeight) break;
 						
-						for (int j = -1; j < 2; ++j) {
+						for (int j = -2; j <= 2; ++j) {
 							int newCol = col + j*3;
 							if (newCol < 0) continue;
 							else if (newCol >= ModWidth*3) break;
@@ -264,7 +264,7 @@ bool MyImage::Modify()
 								round((newRow / Scale)) * Width * 3;
 							if (refCoord > (Width * Height * 3)) continue;
 
-							int scale = schalars[5*(i+2)+j];
+							int scale = schalars[5*(i+2)+(j+2)];
 							p1 += UINT(Data[refCoord + 0] & 0xFF) * scale;
 							p2 += UINT(Data[refCoord + 1] & 0xFF) * scale;
 							p3 += UINT(Data[refCoord + 2] & 0xFF) * scale;
