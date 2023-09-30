@@ -89,18 +89,21 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		inImage.ReadImage();
 		unsigned int* hueHist = inImage.buildHistogram(false);
 
-		char name[25];
-		sprintf(name, "test/args-%i.txt", i);
-		inImage.saveHist(name, hueHist);
+		//char name[25];
+		//sprintf(name, "test/args-%i.txt", i);
+		//inImage.saveHist(name, hueHist);
 	}
 
 	inImage.setImagePath(argsPtr[0]);
 	inImage.ReadImage();
-	unsigned int* hueHist = inImage.buildHistogram(true);
-	inImage.saveHist("test/input.txt", hueHist);
+	//unsigned int* hueHist = inImage.buildHistogram(true);
+	//inImage.saveHist("test/input.txt", hueHist);
 
 	// Check each histogram object
-
+	inImage.initDataEdited();
+	for (int i = 0; i < numArgs - 1; ++i) {
+		inImage.objDetect(i);
+	}
 
 	
 
@@ -192,6 +195,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
+   SetWindowPos(hWnd, NULL, 0, 0, inImage.getWidth() + 15, inImage.getHeight() + 60,
+	   SWP_NOMOVE);
+
    return TRUE;
 }
 
@@ -265,7 +271,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				bmi.bmiHeader.biSizeImage = inImage.getWidth()*inImage.getHeight();
 
 				SetDIBitsToDevice(hdc,
-								  0,100,inImage.getWidth(),inImage.getHeight(),
+								  0,0,inImage.getWidth(),inImage.getHeight(),
 								  0,0,0,inImage.getHeight(),
 								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
 							   

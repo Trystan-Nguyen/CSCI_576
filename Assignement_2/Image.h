@@ -31,14 +31,29 @@ class MyImage
 {
 
 private:
+	struct pixelCluster {
+		int location;
+		int clusterLabel;
+	};
+	struct range {
+		int min;
+		int max;
+	};
+	struct histograms {
+		unsigned int* hueHist;
+		range* satHist;
+	};
+	
+
 	int		Width;					// Width of Image
 	int		Height;					// Height of Image
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
+	char*  DataEdited;					// RGB data of the image
 	
 	int		numObjs;
 	int		objIndex;
-	unsigned int**	objsHistograms;
+	histograms*	objsHistograms;
 	unsigned int* inputHistogram;
 
 public:
@@ -73,6 +88,13 @@ public:
 	unsigned int* buildHistogram(bool isInputImg);
 
 	void saveHist(char* name, unsigned int* hist);
+	void objDetect(int i);
+
+	void initDataEdited();
+	void setDataEdited();
+
+	int* rangeQuery(pixelCluster* cluster, int pnt, int sizeRef);
+	void DBScan(pixelCluster* cluster, int minSize, int sizeRef);
 
 };
 
