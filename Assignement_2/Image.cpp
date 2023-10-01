@@ -128,9 +128,9 @@ bool MyImage::ReadImage()
 	}
 
 	// Clean up and return
-	delete Rbuf;
-	delete Gbuf;
-	delete Bbuf;
+	delete[] Rbuf;
+	delete[] Gbuf;
+	delete[] Bbuf;
 	fclose(IN_FILE);
 
 	return true;
@@ -188,9 +188,9 @@ bool MyImage::WriteImage()
 	}
 	
 	// Clean up and return
-	delete Rbuf;
-	delete Gbuf;
-	delete Bbuf;
+	delete[] Rbuf;
+	delete[] Gbuf;
+	delete[] Bbuf;
 	fclose(OUT_FILE);
 
 	return true;
@@ -322,71 +322,51 @@ void MyImage::saveHist(char* name, unsigned int* hist) {
 	fclose(OUT_FILE);
 }
 
+int maxDist = 50;
+void MyImage::clusterNeighbors(pixelCluster* data, int size, int index, int id) {
+	int* clusterId = new int(id);
+	data[index].clusterLabel = clusterId;
 
-int espilon = 5;
-int* MyImage::rangeQuery(pixelCluster* cluster, int pnt, int sizeRef) {
-	int* N = new int[sizeRef];
-	for (int i = 0; i < sizeRef; ++i) N[i] = -1;
+	int curW = data[index].location % Width;
+	int curH = round(double(data[index].location) / Width);
 
-	int index = 0;
-	int refW = pnt % Width;
-	int refC = round(double(pnt) / Width);
-	for (int i = 0; i < sizeRef; ++i) {
-		int dataW = cluster[i].location % Width;
-		int dataC = round(double(cluster[i].location) / Width);
-		if (sqrt(pow(refW - dataW, 2) + pow(refC - dataC, 2)) <= espilon) {
-			N[index++] = i;
+
+	for (int i = 0; i < size; ++i) {
+		if (i == index) continue;
+		int refW = data[i].location % Width;
+		int refH = round(double(data[i].location) / Width);
+
+		double dist = sqrt(pow(curW - refW, 2) + pow(curH - refH, 2));
+		if (sqrt(pow(curW - refW, 2) + pow(curH - refH, 2)) <= maxDist) {
+			if (data[i].clusterLabel == NULL) {
+				data[i].clusterLabel = clusterId;
+				data[i].dist = dist;
+			}
+			else if (*data[i].clusterLabel != *data[index].clusterLabel){
+				*data[i].clusterLabel = id;
+			}
 		}
 	}
-
-	return N;
 }
 
-void MyImage::DBScan(pixelCluster* cluster, int minSize, int sizeRef) {
+int MyImage::clusteringFunction(pixelCluster* data, int size) {
 	int clusterId = 0;
 
-	for (int i = 0; i < sizeRef; ++i) {
-		if (cluster[i].clusterLabel != -1) continue;
-		int* neighbors = rangeQuery(cluster, cluster[i].location, sizeRef);
-		
-		int sizeN = 0;
-		for (int sizeN = 0; sizeN < sizeRef; ++sizeN) {
-			if (neighbors[sizeN] < 0) break;
+	for (int i = 0; i < size; ++i) {
+		///*
+		if (data[i].clusterLabel != NULL && data[i].dist > double(maxDist) * 0.95) {
+			data[i].dist = 0.0;
+			clusterNeighbors(data, size, i, *data[i].clusterLabel);
 		}
-		if (sizeN < minSize) {
-			for (int ii = 0; i < sizeN; ++ii) cluster[neighbors[ii]].clusterLabel = 0;
-			delete neighbors;
-			continue;
-		}
-
-		++clusterId;
-		cluster[i].clusterLabel = clusterId;
-		for (int ii = 0; i < sizeN; ++ii) {
-			pixelCluster q = cluster[neighbors[ii]];
-			if (q.clusterLabel == 0) q.clusterLabel = clusterId;
-			else if (q.clusterLabel != -1) continue;
-			q.clusterLabel = clusterId;
-			
-			int* N = rangeQuery(cluster, cluster[i].location, sizeRef);
-			int sizeNN = 0;
-			for (int sizeNN = 0; sizeNN < sizeRef; ++sizeNN) {
-				if (neighbors[sizeNN] < 0) break;
-			}
-			if (sizeNN > minSize) {
-				for (int ne = 0; ne < sizeNN; ++ne) {
-					if (cluster[neighbors[ne]].clusterLabel == -1) 
-						neighbors[sizeN++] = neighbors[ne];
-				}
-			}
-			delete N;
-		}
-		delete neighbors;
-
-
-
+		else if (data[i].clusterLabel == NULL) clusterNeighbors(data, size, i, clusterId++);
+		//*/
+		/**
+		if(data[i].clusterLabel != NULL) clusterNeighbors(data, size, i, *data[i].clusterLabel);
+		else clusterNeighbors(data, size, i, clusterId++);
+		*/
 	}
+	return clusterId;
 }
-
 
 void MyImage::objDetect(int histIndex) {
 	unsigned int* histHue = objsHistograms[histIndex].hueHist;
@@ -405,7 +385,7 @@ void MyImage::objDetect(int histIndex) {
 	unsigned char* detections = new unsigned char [Height * Width];
 	pixelCluster* pixelLoc = new pixelCluster[Height * Width];
 	int pixelIndex = 0;
-	for (int i = 0; i, Height * Width; ++i) pixelLoc = 0;
+	for (int i = 0; i < Height * Width; ++i) pixelLoc[i] = {-1, NULL};
 
 	for (int i = 0; i < Width * Height * 3; i+=3) {
 		int hue = rgbToHue(
@@ -419,48 +399,37 @@ void MyImage::objDetect(int histIndex) {
 
 		if (histHue[hue] > avgHue && sat >= histSat[hue].min && sat <= histSat[hue].max) {
 			detections[i/3] = 255;
-			pixelLoc[pixelIndex++] = { i / 3 , -1};
-			/**
-			Data[i + 0] = 255;
-			Data[i + 1] = 0;
-			Data[i + 2] = 0;
-			*/
+			pixelLoc[pixelIndex++] = { i / 3, NULL, 0.0};
 		}
 		else {
 			detections[i/3] = 0;
-			/**
-			Data[i + 0] = 0;
-			Data[i + 1] = 0;
-			Data[i + 2] = 0;
-			*/
 		}
 	}
 
-	DBScan(pixelLoc, 10, pixelIndex);
+	int totalClusterNum = clusteringFunction(pixelLoc, pixelIndex);
 
 	for (int h = 0; h < Height; ++h) {
 		for (int w = 0; w < Width; ++w) {
-			/*
-			int count = 0;
-			int sum = 0;
-			for (int i = (h - 3) >= 0 ? h - 3 : 0; i < i+3 && i < Height; ++i) {
-				for (int j = (h - 3) >= 0 ? h - 3 : 0; j < j + 3 && j < Width; ++j) {
-					int index = i * Width + j;
-					sum += detections[index];
-					++count;
-				}
-			}
-			
-			Data[h * Width * 3 + w * 3 + 0] = round(double(sum) / count);
-			Data[h * Width * 3 + w * 3 + 1] = round(double(sum) / count);
-			Data[h * Width * 3 + w * 3 + 2] = round(double(sum) / count);
-			*/
-
 			Data[h * Width * 3 + w * 3 + 0] = detections[h * Width + w];
 			Data[h * Width * 3 + w * 3 + 1] = detections[h * Width + w];
 			Data[h * Width * 3 + w * 3 + 2] = detections[h * Width + w];
 		}
 	}
+
+	int* clusterIds = new int[totalClusterNum];
+	
+	for (int ii = 0; ii < totalClusterNum; ++ii) clusterIds[ii] = 0;
+	for (int ii = 0; ii < pixelIndex; ++ii) {
+		++clusterIds[*(pixelLoc[ii].clusterLabel)];
+		if (*pixelLoc[ii].clusterLabel == 1) {
+			Data[pixelLoc[ii].location*3 + 0] = 0;
+			Data[pixelLoc[ii].location*3 + 1] = 0;
+			Data[pixelLoc[ii].location*3 + 2] = 255;
+		}
+	}
+	for (int ii = 0; ii < totalClusterNum; ++ii) printf("Cluster: %d\tPixels: %d\n", ii, clusterIds[ii]);
+	
+
 
 }
 

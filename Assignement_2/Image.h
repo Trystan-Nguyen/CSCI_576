@@ -33,7 +33,8 @@ class MyImage
 private:
 	struct pixelCluster {
 		int location;
-		int clusterLabel;
+		int* clusterLabel;
+		double dist;
 	};
 	struct range {
 		int min;
@@ -93,8 +94,8 @@ public:
 	void initDataEdited();
 	void setDataEdited();
 
-	int* rangeQuery(pixelCluster* cluster, int pnt, int sizeRef);
-	void DBScan(pixelCluster* cluster, int minSize, int sizeRef);
+	void clusterNeighbors(pixelCluster* data, int size, int index, int id);
+	int clusteringFunction(pixelCluster* data, int size);
 
 };
 

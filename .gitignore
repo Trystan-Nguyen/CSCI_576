@@ -402,3 +402,6 @@ FodyWeavers.xsd
 *.rgb
 *.csv
 *.zip
+*.png
+*.jpeg
+*.txt
