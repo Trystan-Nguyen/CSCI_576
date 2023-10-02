@@ -29,6 +29,9 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
+int numArgs = 1;
+MyImage::clusterData* clusterFrames= new MyImage::clusterData[50];
+int clusterFrameIndex = 0;
 
 // Main entry point for a windows application
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -51,7 +54,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	}
 
 	int pos = 0;
-	int numArgs = 1;
 	while (lpCmdLine[pos] != 0) {
 		if (lpCmdLine[pos] == ' ') {
 			++numArgs;
@@ -87,7 +89,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	for (int i = 1; i < numArgs; ++i) {
 		inImage.setImagePath(argsPtr[i]);
 		inImage.ReadImage();
-		unsigned int* hueHist = inImage.buildHistogram(false);
+		unsigned int* hueHist = inImage.buildHistogram();
 
 		//char name[25];
 		//sprintf(name, "test/args-%i.txt", i);
@@ -98,11 +100,16 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	inImage.ReadImage();
 	//unsigned int* hueHist = inImage.buildHistogram(true);
 	//inImage.saveHist("test/input.txt", hueHist);
-
-	// Check each histogram object
-	inImage.initDataEdited();
+	
 	for (int i = 0; i < numArgs - 1; ++i) {
-		inImage.objDetect(i);
+		MyImage::detectionFrames* temp = inImage.objDetect(i);
+		for (int i = 0; i < temp->frameCounts; ++i) {
+			//printf("Frame count: %d\t Frame Size: %d\n", i, temp->frames[i].size);
+			//printf("\t W: %d %d \tH: %d %d\n", temp->frames->minW, temp->frames->maxW, temp->frames->minH, temp->frames->maxW);
+			if (temp->frames[i].size != 0) {
+				clusterFrames[clusterFrameIndex++] = *(temp->frames);
+			}
+		}
 	}
 
 	
@@ -212,6 +219,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY	- post a quit message and return
 //
 //
+HBRUSH frameColor = CreateSolidBrush(RGB(125, 125, 125));
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 // TO DO: part useful to render video frames, may place your own code here in this function
@@ -274,7 +282,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								  0,0,inImage.getWidth(),inImage.getHeight(),
 								  0,0,0,inImage.getHeight(),
 								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
-							   
+
+				for (int i = 0; i < clusterFrameIndex; ++i) {
+					//const RECT* frame = new RECT({ clusterFrames[i].minW, clusterFrames[i].maxH, clusterFrames[i].maxW, clusterFrames[i].minH });
+					const RECT* frameL = new RECT({clusterFrames[i].minW-10, clusterFrames[i].maxH+10, clusterFrames[i].minW-5, clusterFrames[i].minH-10});
+					FillRect(hdc, frameL, frameColor);
+					const RECT* frameR = new RECT({ clusterFrames[i].maxW+5, clusterFrames[i].maxH+10, clusterFrames[i].maxW+10, clusterFrames[i].minH-10});
+					FillRect(hdc, frameR, frameColor);
+					const RECT* frameT = new RECT({ clusterFrames[i].minW-10, clusterFrames[i].maxH+10, clusterFrames[i].maxW+10, clusterFrames[i].maxH+5});
+					FillRect(hdc, frameT, frameColor);
+					const RECT* frameB = new RECT({ clusterFrames[i].minW-10, clusterFrames[i].minH-5, clusterFrames[i].maxW+10, clusterFrames[i].minH-10});
+					FillRect(hdc, frameB, frameColor);
+					
+					//Rectangle(hdc, clusterFrames[i].minW, clusterFrames[i].maxH, clusterFrames[i].maxW, clusterFrames[i].minH);
+					//printf("RECT STATUS: %d\n", FillRect(hdc, frame, frameColor));
+					//printf("W %d %d\tH %d %d\n", clusterFrames[i].minW, clusterFrames[i].maxW, clusterFrames[i].maxH, clusterFrames[i].minH);
+				}
+
 				EndPaint(hWnd, &ps);
 			}
 			break;

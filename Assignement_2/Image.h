@@ -43,6 +43,7 @@ private:
 	struct histograms {
 		unsigned int* hueHist;
 		range* satHist;
+		char* name;
 	};
 	
 
@@ -50,7 +51,6 @@ private:
 	int		Height;					// Height of Image
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
-	char*  DataEdited;					// RGB data of the image
 	
 	int		numObjs;
 	int		objIndex;
@@ -58,6 +58,17 @@ private:
 	unsigned int* inputHistogram;
 
 public:
+	struct clusterData {
+		int size;
+		int minW;
+		int maxW;
+		int minH;
+		int maxH;
+	};
+	struct detectionFrames {
+		clusterData* frames;
+		int frameCounts;
+	};
 	// Constructor
 	MyImage();
 	// Copy Constructor
@@ -86,17 +97,15 @@ public:
 	bool	Modify();
 
 	void setNumObj(int i);
-	unsigned int* buildHistogram(bool isInputImg);
+	unsigned int* buildHistogram();
 
 	void saveHist(char* name, unsigned int* hist);
-	void objDetect(int i);
-
-	void initDataEdited();
-	void setDataEdited();
+	MyImage::detectionFrames* objDetect(int i);
 
 	void clusterNeighbors(pixelCluster* data, int size, int index, int id);
 	int clusteringFunction(pixelCluster* data, int size);
 
+	int compareHistogram(unsigned int* objHist, int startW, int startH, int endW, int endH, int threshold);
 };
 
 #endif //IMAGE_DISPLAY
