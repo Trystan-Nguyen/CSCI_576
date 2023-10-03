@@ -291,10 +291,16 @@ unsigned int* MyImage::buildHistogram() {
 		
 		// Skip Green Screen
 		if (hue==120 || hue == -1) continue;
-		++hueHist[hue];
-		if (satHist[hue].max == -1 && satHist[hue].min == -1) satHist[hue] = { sat, sat };
-		else if (sat > satHist[hue].max) satHist[hue].max = sat;
-		else if (sat < satHist[hue].min) satHist[hue].min = sat;
+		for (int i = -10; i < 11; ++i) {
+			int h = hue + i;
+			if (h < 0) h += 360;
+			else if (h > 359) h -= 360;
+			++hueHist[h];
+			if (satHist[h].max == -1 && satHist[h].min == -1) satHist[h] = { sat, sat };
+			else if (sat > satHist[h].max) satHist[h].max = sat;
+			else if (sat < satHist[h].min) satHist[h].min = sat;
+		}
+
 	}
 
 	histograms ret = { hueHist, satHist, ImagePath };
@@ -316,7 +322,7 @@ void MyImage::saveHist(char* name, unsigned int* hist) {
 	fclose(OUT_FILE);
 }
 
-int maxDist = 50;
+int maxDist = 15;
 void MyImage::clusterNeighbors(pixelCluster* data, int size, int index, int id) {
 	int* clusterId = new int(id);
 	data[index].clusterLabel = clusterId;
@@ -338,6 +344,7 @@ void MyImage::clusterNeighbors(pixelCluster* data, int size, int index, int id) 
 			}
 			else if (*data[i].clusterLabel != *data[index].clusterLabel){
 				*data[i].clusterLabel = id;
+				data[i].dist = 0.0;
 			}
 		}
 	}
@@ -347,17 +354,13 @@ int MyImage::clusteringFunction(pixelCluster* data, int size) {
 	int clusterId = 0;
 
 	for (int i = 0; i < size; ++i) {
+		printf("Index %d / %d\r", i, size);
 		///*
 		if (data[i].clusterLabel != NULL && data[i].dist > double(maxDist) * 0.95) {
 			data[i].dist = 0.0;
 			clusterNeighbors(data, size, i, *data[i].clusterLabel);
 		}
 		else if (data[i].clusterLabel == NULL) clusterNeighbors(data, size, i, clusterId++);
-		//*/
-		/**
-		if(data[i].clusterLabel != NULL) clusterNeighbors(data, size, i, *data[i].clusterLabel);
-		else clusterNeighbors(data, size, i, clusterId++);
-		*/
 	}
 	return clusterId;
 }
@@ -374,7 +377,7 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 			++bins;
 		}
 	}
-	avgHue = round(double(avgHue)*.9 / bins);
+	avgHue = round(double(avgHue) / bins);
 
 	range* histSat = objsHistograms[histIndex].satHist;
 	pixelCluster* pixelLoc = new pixelCluster[Height * Width];
@@ -391,14 +394,28 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 			static_cast<int>(Data[i + 0] & 0xFF),
 			static_cast<int>(Data[i + 1] & 0xFF));
 
-		if (histHue[hue] > avgHue && sat >= histSat[hue].min && sat <= histSat[hue].max) 
-			pixelLoc[pixelIndex++] = { i / 3, NULL, 0.0};
+		if (histHue[hue] > avgHue*1.5 && sat >= histSat[hue].min && sat <= histSat[hue].max) {
+			pixelLoc[pixelIndex++] = { i / 3, NULL, 0.0 };
+			
+		}
+		
+		else {
+			Data[i + 0] = 0;
+			Data[i + 1] = 0;
+			Data[i + 2] = 0;
+			
+		}
+		
 		
 	}
+	return NULL;
+	
 
 	int totalClusterNum = clusteringFunction(pixelLoc, pixelIndex);
 	clusterData* clusterIds = new clusterData[totalClusterNum];
 	
+	printf("\n");
+
 	for (int ii = 0; ii < totalClusterNum; ++ii) {
 		clusterIds[ii] = {0, 641, -1, 481, -1};
 	}
@@ -419,17 +436,17 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 			continue;
 		}
 
-		int clusterStatus = compareHistogram(histHue, clusterIds[i].minH, clusterIds[i].minW, clusterIds[i].maxH, clusterIds[i].maxW, avgHue);
+		int clusterStatus = compareHistogram(histHue, max(clusterIds[i].minH, 0), max(clusterIds[i].minW,0), clusterIds[i].maxH, clusterIds[i].maxW, avgHue);
 		if (clusterStatus != 0) {
 			clusterIds[i].size = 0;
 		}
 
-		/**
+		
 		printf("ClusterId: %d\n", i);
 		printf("\tSize: %d\n", clusterIds[i].size);
 		printf("\tRanges: %d %d %d %d\n", clusterIds[i].minH, clusterIds[i].minW, clusterIds[i].maxH, clusterIds[i].maxW);
 		printf("\tStatus: %d\n", clusterStatus);
-		*/
+		
 		++validClusters;
 	}
 	MyImage::detectionFrames* ret = new MyImage::detectionFrames();
@@ -449,9 +466,9 @@ int MyImage::compareHistogram(unsigned int* objHist, int startW, int startH, int
 	unsigned int* hueHist = new unsigned int[360];
 	for (int i = 0; i < 360; ++i) hueHist[i] = 0;
 
-	for (int c = startH; c < endH; ++c) {
-		for (int r = startW; r < endW; ++r) {
-			int location = c * 3 * Width + r * 3;
+	for (int h = startH; h < endH && h < Height; ++h) {
+		for (int w = startW; w < endW && w < Width; ++w) {
+			int location = h * 3 * Width + w * 3;
 			int hue = rgbToHue(
 				static_cast<int>(Data[location + 2] & 0xFF),
 				static_cast<int>(Data[location + 0] & 0xFF),

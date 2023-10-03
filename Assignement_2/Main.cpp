@@ -103,6 +103,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	
 	for (int i = 0; i < numArgs - 1; ++i) {
 		MyImage::detectionFrames* temp = inImage.objDetect(i);
+		if (temp == NULL) continue;
 		for (int i = 0; i < temp->frameCounts; ++i) {
 			//printf("Frame count: %d\t Frame Size: %d\n", i, temp->frames[i].size);
 			//printf("\t W: %d %d \tH: %d %d\n", temp->frames->minW, temp->frames->maxW, temp->frames->minH, temp->frames->maxW);
