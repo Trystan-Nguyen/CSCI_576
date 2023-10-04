@@ -85,6 +85,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OutputFile>.\Debug\Image.exe</OutputFile>
+      <StackCommitSize>
+      </StackCommitSize>
+      <StackReserveSize>4194304 </StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

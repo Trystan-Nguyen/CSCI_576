@@ -196,7 +196,16 @@ bool MyImage::WriteImage()
 
 }
 
+void MyImage::setImagePath(const char* path) { 
+	strcpy(ImagePath, path); 
+	
+	int modPtr = 0;
+	for (int i = 0; ImagePath[i] != 0; ++i) {
+		if (ImagePath[i] == '/' && ImagePath[i + 1] != 0) modPtr = i+1;
+	}
+	fileName = ImagePath + modPtr;
 
+}
 
 
 // Here is where you would place your code to modify an image
@@ -322,47 +331,59 @@ void MyImage::saveHist(char* name, unsigned int* hist) {
 	fclose(OUT_FILE);
 }
 
-int maxDist = 15;
-void MyImage::clusterNeighbors(pixelCluster* data, int size, int index, int id) {
-	int* clusterId = new int(id);
-	data[index].clusterLabel = clusterId;
+int chunkSize = 5;
+void MyImage::bfs(char* pixelData, int index, clusterData* clusterPtr) {
+	pixelData[index] = 0;
+	int curW = index % Width;
+	int curH = round(double(index) / Width);
+	++clusterPtr->size;
+	clusterPtr->minW = min(clusterPtr->minW, curW);
+	clusterPtr->maxW = max(clusterPtr->maxW, curW);
+	clusterPtr->minH = min(clusterPtr->minH, curH);
+	clusterPtr->maxH = max(clusterPtr->maxH, curH);
 
-	int curW = data[index].location % Width;
-	int curH = round(double(data[index].location) / Width);
-
-
-	for (int i = 0; i < size; ++i) {
-		if (i == index) continue;
-		int refW = data[i].location % Width;
-		int refH = round(double(data[i].location) / Width);
-
-		double dist = sqrt(pow(curW - refW, 2) + pow(curH - refH, 2));
-		if (sqrt(pow(curW - refW, 2) + pow(curH - refH, 2)) <= maxDist) {
-			if (data[i].clusterLabel == NULL) {
-				data[i].clusterLabel = clusterId;
-				data[i].dist = dist;
-			}
-			else if (*data[i].clusterLabel != *data[index].clusterLabel){
-				*data[i].clusterLabel = id;
-				data[i].dist = 0.0;
+	for (int r = curH-chunkSize; r <= curH+chunkSize; ++r) {
+		for (int c = curW-chunkSize; c <= curW + chunkSize; ++c) {
+			if (r < 0 || c < 0 || r >= Height || c >= Width) continue;
+			if (pixelData[r * Width + c] == 1) {
+				bfs(pixelData, r * Width + c, clusterPtr);
 			}
 		}
 	}
 }
 
-int MyImage::clusteringFunction(pixelCluster* data, int size) {
+
+MyImage::detectionFrames* MyImage::clusteringFunction(char* pixelData) {
+	clusterData** arr = new clusterData*[250];
+	for (int i = 0; i < 250; ++i) arr[i] = NULL;
+	
 	int clusterId = 0;
 
-	for (int i = 0; i < size; ++i) {
-		printf("Index %d / %d\r", i, size);
-		///*
-		if (data[i].clusterLabel != NULL && data[i].dist > double(maxDist) * 0.95) {
-			data[i].dist = 0.0;
-			clusterNeighbors(data, size, i, *data[i].clusterLabel);
+	for (int i = 0; i < Width*Height; ++i) {
+		if (pixelData[i] == 1) {
+			clusterData* clusterPtr = new MyImage::clusterData();
+			clusterPtr->minW = i % Width;
+			clusterPtr->maxW = i % Width;
+			clusterPtr->minH = round(double(i) / Width);
+			clusterPtr->maxH = round(double(i) / Width);
+			clusterPtr->size = 0;
+			bfs(pixelData, i, clusterPtr);
+			
+			//printf("Cluster Size: %d\n", clusterPtr->size);
+			//printf("\t %d %d %d %d\n", cluster.minW, cluster.maxW, cluster.minH, cluster.maxH);
+			if (clusterPtr->size > 50) {
+				arr[clusterId++] = clusterPtr;
+			}
+			else {
+				delete clusterPtr;
+			}
 		}
-		else if (data[i].clusterLabel == NULL) clusterNeighbors(data, size, i, clusterId++);
 	}
-	return clusterId;
+	clusterData* cleanArr = new clusterData[clusterId];
+	for (int i = 0; i < clusterId; ++i)cleanArr[i] = *arr[i];
+	delete[] arr;
+	MyImage::detectionFrames* ret = new MyImage::detectionFrames({ cleanArr, clusterId, fileName });
+	return ret;
 }
 
 
@@ -381,6 +402,8 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 
 	range* histSat = objsHistograms[histIndex].satHist;
 	pixelCluster* pixelLoc = new pixelCluster[Height * Width];
+	char* idealPixels = new char[Width * Height];
+
 	int pixelIndex = 0;
 	for (int i = 0; i < Height * Width; ++i) pixelLoc[i] = {-1, NULL};
 
@@ -396,73 +419,53 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 
 		if (histHue[hue] > avgHue*1.5 && sat >= histSat[hue].min && sat <= histSat[hue].max) {
 			pixelLoc[pixelIndex++] = { i / 3, NULL, 0.0 };
-			
+			idealPixels[i/3] = 1;
 		}
 		
 		else {
+			idealPixels[i/3] = 0;
+			/**
 			Data[i + 0] = 0;
 			Data[i + 1] = 0;
-			Data[i + 2] = 0;
-			
+			Data[i + 2] = 0;	
+			*/
 		}
 		
 		
 	}
-	return NULL;
+	//return NULL;
 	
+	detectionFrames* clusters = clusteringFunction(idealPixels);
 
-	int totalClusterNum = clusteringFunction(pixelLoc, pixelIndex);
-	clusterData* clusterIds = new clusterData[totalClusterNum];
-	
-	printf("\n");
-
-	for (int ii = 0; ii < totalClusterNum; ++ii) {
-		clusterIds[ii] = {0, 641, -1, 481, -1};
-	}
-	for (int ii = 0; ii < pixelIndex; ++ii) {
-		++clusterIds[*(pixelLoc[ii].clusterLabel)].size;
-		int refW = pixelLoc[ii].location % Width;
-		int refH = round(double(pixelLoc[ii].location) / Width);
-		clusterIds[*(pixelLoc[ii].clusterLabel)].minH = min(clusterIds[*(pixelLoc[ii].clusterLabel)].minH, refH);
-		clusterIds[*(pixelLoc[ii].clusterLabel)].maxH = max(clusterIds[*(pixelLoc[ii].clusterLabel)].maxH, refH);
-		clusterIds[*(pixelLoc[ii].clusterLabel)].minW = min(clusterIds[*(pixelLoc[ii].clusterLabel)].minW, refW);
-		clusterIds[*(pixelLoc[ii].clusterLabel)].maxW = max(clusterIds[*(pixelLoc[ii].clusterLabel)].maxW, refW);
-	}
-	
 	int validClusters = 0;
-	for (int i = 0; i < totalClusterNum; ++i) {
-		if (clusterIds[i].size < 10) {
-			clusterIds[i].size = 0;
+	for (int i = 0; i < clusters->frameCounts; ++i) {
+		if (clusters->frames[i].size < 10) {
+			clusters->frames[i].size = 0;
 			continue;
 		}
 
-		int clusterStatus = compareHistogram(histHue, max(clusterIds[i].minH, 0), max(clusterIds[i].minW,0), clusterIds[i].maxH, clusterIds[i].maxW, avgHue);
+		int clusterStatus = compareHistogram(histHue, histSat,
+			max(clusters->frames[i].minH, 0),
+			max(clusters->frames[i].minW,0),
+			clusters->frames[i].maxH,
+			clusters->frames[i].maxW, avgHue);
 		if (clusterStatus != 0) {
-			clusterIds[i].size = 0;
+			clusters->frames[i].size = 0;
 		}
 
-		
+		///**
 		printf("ClusterId: %d\n", i);
-		printf("\tSize: %d\n", clusterIds[i].size);
-		printf("\tRanges: %d %d %d %d\n", clusterIds[i].minH, clusterIds[i].minW, clusterIds[i].maxH, clusterIds[i].maxW);
+		printf("\tSize: %d\n", clusters->frames[i].size);
+		printf("\tRanges: %d %d %d %d\n", clusters->frames[i].minH, clusters->frames[i].minW, clusters->frames[i].maxH, clusters->frames[i].maxW);
 		printf("\tStatus: %d\n", clusterStatus);
-		
+		//*/
 		++validClusters;
 	}
-	MyImage::detectionFrames* ret = new MyImage::detectionFrames();
-	ret->frames = new clusterData[validClusters];
-	int retIndex = 0;
-	for (int i = 0; i < totalClusterNum; ++i) {
-		if (clusterIds[i].size > 0) {
-			ret->frames[retIndex++] = { clusterIds[i].size ,clusterIds[i].minW ,clusterIds[i].maxW ,clusterIds[i].minH ,clusterIds[i].maxH };
-		}
-	}
-	delete[] clusterIds;
-	ret->frameCounts = validClusters;
-	return ret;
+
+	return clusters;
 }
 
-int MyImage::compareHistogram(unsigned int* objHist, int startW, int startH, int endW, int endH, int threshold) {
+int MyImage::compareHistogram(unsigned int* objHist, range* histSat, int startW, int startH, int endW, int endH, int threshold) {
 	unsigned int* hueHist = new unsigned int[360];
 	for (int i = 0; i < 360; ++i) hueHist[i] = 0;
 
@@ -473,13 +476,27 @@ int MyImage::compareHistogram(unsigned int* objHist, int startW, int startH, int
 				static_cast<int>(Data[location + 2] & 0xFF),
 				static_cast<int>(Data[location + 0] & 0xFF),
 				static_cast<int>(Data[location + 1] & 0xFF));
-			++hueHist[hue];
+			int sat = rgbToSat(
+				static_cast<int>(Data[location + 2] & 0xFF),
+				static_cast<int>(Data[location + 0] & 0xFF),
+				static_cast<int>(Data[location + 1] & 0xFF));
+			if (sat >= histSat[hue].min && sat <= histSat[hue].max) ++hueHist[hue];
+			
+			
+			/*
+			for (int i = -10; i <= 10; i++) {
+				int h = hue + i;
+				if (h < 0) h += 360;
+				else if (h > 359) h -= 360;
+				++hueHist[h];
+			}
+			*/
 		}
 	}
 
 	int missingVals = 0;
 	for (int i = 0; i < 360; ++i) {
-		if (objHist[i] > 0.01*threshold && hueHist[i] == 0)
+		if (objHist[i] > 1.5*threshold && hueHist[i] == 0)
 			++missingVals;
 			//return false;
 	}

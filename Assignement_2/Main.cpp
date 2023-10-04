@@ -106,13 +106,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		if (temp == NULL) continue;
 		for (int i = 0; i < temp->frameCounts; ++i) {
 			//printf("Frame count: %d\t Frame Size: %d\n", i, temp->frames[i].size);
-			//printf("\t W: %d %d \tH: %d %d\n", temp->frames->minW, temp->frames->maxW, temp->frames->minH, temp->frames->maxW);
+			//printf("\t W: %d %d \tH: %d %d\n", temp->frames[i].minW, temp->frames[i].maxW, temp->frames[i].minH, temp->frames[i].maxW);
 			if (temp->frames[i].size != 0) {
-				clusterFrames[clusterFrameIndex++] = *(temp->frames);
+				clusterFrames[clusterFrameIndex++] = temp->frames[i];
 			}
 		}
 	}
-
 	
 
 	// Initialize global strings
@@ -285,7 +284,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
 
 				for (int i = 0; i < clusterFrameIndex; ++i) {
-					//const RECT* frame = new RECT({ clusterFrames[i].minW, clusterFrames[i].maxH, clusterFrames[i].maxW, clusterFrames[i].minH });
 					const RECT* frameL = new RECT({clusterFrames[i].minW-10, clusterFrames[i].maxH+10, clusterFrames[i].minW-5, clusterFrames[i].minH-10});
 					FillRect(hdc, frameL, frameColor);
 					const RECT* frameR = new RECT({ clusterFrames[i].maxW+5, clusterFrames[i].maxH+10, clusterFrames[i].maxW+10, clusterFrames[i].minH-10});
@@ -295,7 +293,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					const RECT* frameB = new RECT({ clusterFrames[i].minW-10, clusterFrames[i].minH-5, clusterFrames[i].maxW+10, clusterFrames[i].minH-10});
 					FillRect(hdc, frameB, frameColor);
 					
-					//Rectangle(hdc, clusterFrames[i].minW, clusterFrames[i].maxH, clusterFrames[i].maxW, clusterFrames[i].minH);
+					printf("Frame count: %d\t Frame Size: %d\n", i, clusterFrames[i].size);
+					printf("\t W: %d %d \tH: %d %d\n", clusterFrames[i].minW, clusterFrames[i].maxW, clusterFrames[i].minH, clusterFrames[i].maxW);
 					//printf("RECT STATUS: %d\n", FillRect(hdc, frame, frameColor));
 					//printf("W %d %d\tH %d %d\n", clusterFrames[i].minW, clusterFrames[i].maxW, clusterFrames[i].maxH, clusterFrames[i].minH);
 				}

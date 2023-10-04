@@ -56,6 +56,7 @@ private:
 	int		objIndex;
 	histograms*	objsHistograms;
 	unsigned int* inputHistogram;
+	char* fileName;
 
 public:
 	struct clusterData {
@@ -68,6 +69,7 @@ public:
 	struct detectionFrames {
 		clusterData* frames;
 		int frameCounts;
+		char* name;
 	};
 	// Constructor
 	MyImage();
@@ -83,7 +85,7 @@ public:
 	void	setWidth( const int w)  { Width = w; }; 
 	void	setHeight(const int h) { Height = h; }; 
 	void	setImageData( const char *img ) { Data = (char *)img; };
-	void	setImagePath( const char *path) { strcpy(ImagePath, path); }
+	void	setImagePath(const char* path);
 	int		getWidth() { return Width; };
 	int		getHeight() { return Height; };
 	char*	getImageData() { return Data; };
@@ -100,12 +102,12 @@ public:
 	unsigned int* buildHistogram();
 
 	void saveHist(char* name, unsigned int* hist);
-	MyImage::detectionFrames* objDetect(int i);
+	detectionFrames* objDetect(int i);
 
-	void clusterNeighbors(pixelCluster* data, int size, int index, int id);
-	int clusteringFunction(pixelCluster* data, int size);
+	void bfs(char* pixelData, int index, clusterData* ptr);
+	detectionFrames* clusteringFunction(char* pixelData);
 
-	int compareHistogram(unsigned int* objHist, int startW, int startH, int endW, int endH, int threshold);
+	int compareHistogram(unsigned int* objHist, range* satHist, int startW, int startH, int endW, int endH, int threshold);
 };
 
 #endif //IMAGE_DISPLAY
