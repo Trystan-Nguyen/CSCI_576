@@ -98,9 +98,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	inImage.setImagePath(argsPtr[0]);
 	inImage.ReadImage();
-	//unsigned int* hueHist = inImage.buildHistogram(true);
+	////unsigned int* hueHist = inImage.buildHistogram();
 	//inImage.saveHist("test/input.txt", hueHist);
 	
+	///**
 	for (int i = 0; i < numArgs - 1; ++i) {
 		MyImage::detectionFrames* temp = inImage.objDetect(i);
 		if (temp == NULL) continue;
@@ -112,6 +113,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			}
 		}
 	}
+	//*/
+	
 	
 
 	// Initialize global strings
