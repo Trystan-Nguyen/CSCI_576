@@ -95,8 +95,6 @@ public:
 	bool	ReadImage();
 	bool	WriteImage();
 
-	// Modifications
-	bool	Modify();
 
 	void setNumObj(int i);
 	unsigned int* buildHistogram();
