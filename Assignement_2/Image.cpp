@@ -9,11 +9,6 @@
 
 #include "Image.h"
 
-struct histograms {
-	unsigned int* hueHist;
-	unsigned int* satHist;
-};
-
 // Constructor and Desctructors
 MyImage::MyImage() 
 {
@@ -282,13 +277,13 @@ bool MyImage::checkSurroundingPixels(int index) {
 		}
 	}
 	//printf("%d\t%d\n", val, count);
-	return double(val) / count >= 0.5;
+	return val > 0;
 }
 
 unsigned int* MyImage::buildHistogram() {
 	unsigned int* hueHist = new unsigned int[362];
 	range* satHist = new range[360];
-
+	int numPixels = 0;
 	for (int i = 0; i < 362; ++i) hueHist[i] = 0;
 	for (int i = 0; i < 360; ++i) satHist[i] = {-1,-1};
 
@@ -313,26 +308,15 @@ unsigned int* MyImage::buildHistogram() {
 			hueHist[361] = 1;
 			continue;
 		}
-		/**
-		for (int j = -5; j <= 5; ++j) {
-			int h = hue + j;
-			if (h < 0) h += 360;
-			else if (h > 359) h -= 360;
-			++hueHist[h];
-			//if (satHist[h].max == -1 && satHist[h].min == -1) satHist[h] = { sat, sat };
-			//else if (sat > satHist[h].max) satHist[h].max = sat;
-			//else if (sat < satHist[h].min) satHist[h].min = sat;
-		}
-		*/
 		
-		hueHist[hue]+= 5;
+		++hueHist[hue];
 		if (satHist[hue].max == -1 && satHist[hue].min == -1) satHist[hue] = { sat, sat };
 		else if (sat > satHist[hue].max) satHist[hue].max = sat;
 		else if (sat < satHist[hue].min) satHist[hue].min = sat;
-
+		++numPixels;
 	}
 
-	histograms ret = { hueHist, satHist, ImagePath };
+	histograms ret = { hueHist, satHist, ImagePath};
 
 	objsHistograms[objIndex] = ret;
 	++objIndex;
@@ -351,7 +335,7 @@ void MyImage::saveHist(char* name, unsigned int* hist) {
 	fclose(OUT_FILE);
 }
 
-int chunkSize = 15;
+int chunkSize = 10;
 void MyImage::bfs(char* pixelData, int index, clusterData* clusterPtr) {
 	pixelData[index] = 0;
 	int curW = index % Width;
@@ -409,8 +393,9 @@ MyImage::detectionFrames* MyImage::clusteringFunction(char* pixelData) {
 	return ret;
 }
 
-int filterSize = 5;
-char* avgFilter(char* pixels, int width, int height) {
+int filterSize = 2;
+char* avgFilter(char* pixels, int width, int height, double comp) {
+
 	char* avgData = new char[width * height];
 	for (int h = 0; h < height; ++h) {
 		for (int w = 0; w < width; ++w) {
@@ -423,13 +408,14 @@ char* avgFilter(char* pixels, int width, int height) {
 					++count;
 				}
 			}
-			avgData[h * width + w] = (pixel / count) > 0.15;
+			avgData[h * width + w] = (pixel / count) > comp;
 		}
 	}
 	delete[] pixels;
 	return avgData;
 }
 
+bool printMe = false;
 MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 	unsigned int* histHueOG = objsHistograms[histIndex].hueHist;
 	unsigned int* histHue = new unsigned int[362];
@@ -469,12 +455,14 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 
 		if (light < 5 && histHue[360] == 1) idealPixels[i / 3] = 0;
 		else if (light > 95 && histHue[361] == 1) idealPixels[i / 3] = 0;
-		else if (histHueOG[hue] > avgHue && sat >= histSat[hue].min && sat <= histSat[hue].max)
+		else if (histHueOG[hue] > 0.9*avgHue && sat >= histSat[hue].min-10 && sat <= histSat[hue].max+10)
 			idealPixels[i/3] = 1;
 		else idealPixels[i/3] = 0;
 	}
 	
-	idealPixels = avgFilter(idealPixels, Width, Height);
+	idealPixels = avgFilter(idealPixels, Width, Height, 0.25);
+	idealPixels = avgFilter(idealPixels, Width, Height, 0.8);
+	//idealPixels = avgFilter(idealPixels, Width, Height);
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------------------------------------
@@ -501,29 +489,36 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 			continue;
 		}
 
-		int clusterStatus = compareHistogram(histHueOG, histSat,
-			max(clusters->frames[i].minH, 0),
-			max(clusters->frames[i].minW,0),
-			clusters->frames[i].maxH,
-			clusters->frames[i].maxW, avgHue);
-		if (clusterStatus != 0) {
+		//printMe = i == 3;
+		double clusterStatus = compareHistogram(histHueOG, histSat,
+			max(clusters->frames[i].minW, 0)+10,
+			max(clusters->frames[i].minH,0)+10,
+			clusters->frames[i].maxW-10,
+			clusters->frames[i].maxH-10);
+		//if (clusterStatus > 0.075) {
+		if (clusterStatus > 0.15) {
+		//if (clusterStatus != 0.0) {
+		//if(!printMe){
 			clusters->frames[i].size = 0;
 		}
+		//printf("clusterStatus:\t%f\n", clusterStatus);
 
 		///**
 		printf("ClusterId: %d\n", i);
 		printf("\tSize: %d\n", clusters->frames[i].size);
 		printf("\tRanges: %d %d %d %d\n", clusters->frames[i].minH, clusters->frames[i].minW, clusters->frames[i].maxH, clusters->frames[i].maxW);
-		printf("\tStatus: %d\n", clusterStatus);
+		printf("\tStatus: %f\n", clusterStatus);
 		//*/
 		++validClusters;
 	}
 
 	delete[] histHue;
+	delete[] histHueOG;
+	delete[] histSat;
 	return clusters;
 }
 
-int MyImage::compareHistogram(unsigned int* objHist, range* histSat, int startW, int startH, int endW, int endH, double threshold) {
+double MyImage::compareHistogram(unsigned int* objHist, range* histSat, int startW, int startH, int endW, int endH) {
 	unsigned int* hueHist = new unsigned int[362];
 	for (int i = 0; i < 362; ++i) hueHist[i] = 0;
 
@@ -540,28 +535,74 @@ int MyImage::compareHistogram(unsigned int* objHist, range* histSat, int startW,
 			if (light < 5) ++hueHist[360];
 			else if (light > 95) ++hueHist[361];
 			
-			else if (sat >= histSat[hue].min && sat <= histSat[hue].max) {
-			//else {
+			//else 
+			//if (histSat[hue].max - histSat[hue].min < 15 || (sat >= histSat[hue].min-10 && sat <= histSat[hue].max+10)) {
+			//else if (sat >= histSat[hue].min - 10 && sat <= histSat[hue].max + 10) {
+			else {
+				//**
 				for (int j = -5; j <= 5; ++j) {
 					int h = hue + j;
 					if (h < 0) h += 360;
 					else if (h > 359) h -= 360;
-					++hueHist[h];
+					if (sat >= histSat[h].min-10 && sat <= histSat[h].max+10)
+						++hueHist[h];
 				}
+				//*/
 			}
-			//++hueHist[hue];
-		}
-	}
+			
+			/**
+			Data[location] = 0;
+			Data[location+1] = 0;
+			Data[location+2] = 0;
+			//*/
 
-	int missingVals = 0;
-	for (int i = 0; i < 360; ++i) {
-		if (objHist[i] > threshold && hueHist[i] == 0) {
-			++missingVals;
+			/**
+			if (printMe) {
+				if ((hue>215 && hue<219) || hue==55)
+					printf("%d %d %d\n", hue, sat, light);
+			}
+			//*/
+			
 		}
 	}
-	if (hueHist[360] == 1 && objHist[360] == 0) ++missingVals;
-	if (hueHist[361] == 1 && objHist[361] == 0) ++missingVals;
+	//**
+	if (printMe) {
+		for (int i = 0; i < 360; ++i) {
+			//printf("%d %d\n", i , hueHist[i]);
+			printf("%d [%d - %d]\n", i, histSat[i].min, histSat[i].max);
+		}
+	}
+	//*/
+
+
+	double missingVals = 0;
+	int count = 0;
+	for (int i = 0; i < 360; ++i) {
+		if (objHist[i] > 15) {
+			if (hueHist[i] == 0) {
+				++missingVals;
+				if (printMe) printf("%d [%d - %d]\n", i, histSat[i].min, histSat[i].max);
+			}
+			++count;
+		}
+	}
+	if (hueHist[360] == 1) {
+		if (objHist[360] == 0) {
+			++missingVals;
+			if (printMe) printf("Black\n");
+		}
+		++count;
+	}
+	if (hueHist[361] == 1) {
+		if (objHist[361] == 0) {
+			++missingVals;
+			if (printMe) printf("White\n");
+		}
+		++count;
+	}
+	
+	if (printMe) printf("%f / %d\n", missingVals, count);
 
 	delete[] hueHist;
-	return missingVals;
+	return double(missingVals)/count;
 }
