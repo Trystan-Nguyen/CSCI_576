@@ -31,6 +31,7 @@ LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
 int numArgs = 1;
 MyImage::clusterData* clusterFrames= new MyImage::clusterData[50];
+char** frameNames = new char*[50];
 int clusterFrameIndex = 0;
 
 // Main entry point for a windows application
@@ -71,11 +72,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			++currentArg;
 		}
 	}
+	/**
 	for (int i = 0; i < numArgs; ++i) {
 		printf("%s\n", argsPtr[i]);
 	}
-
-
+	//*/
 
 	// Set up the images
 	int w = 640;
@@ -109,6 +110,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			//printf("Frame count: %d\t Frame Size: %d\n", i, temp->frames[i].size);
 			//printf("\t W: %d %d \tH: %d %d\n", temp->frames[i].minW, temp->frames[i].maxW, temp->frames[i].minH, temp->frames[i].maxW);
 			if (temp->frames[i].size != 0) {
+				frameNames[clusterFrameIndex] = temp->name;
 				clusterFrames[clusterFrameIndex++] = temp->frames[i];
 			}
 		}
@@ -188,6 +190,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
+
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
@@ -222,7 +225,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY	- post a quit message and return
 //
 //
-HBRUSH frameColor = CreateSolidBrush(RGB(125, 125, 125));
+HBRUSH frameColor = CreateSolidBrush(RGB(0, 254, 0));
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 // TO DO: part useful to render video frames, may place your own code here in this function
@@ -285,6 +288,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								  0,0,inImage.getWidth(),inImage.getHeight(),
 								  0,0,0,inImage.getHeight(),
 								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
+				
+				HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+				LOGFONT logfont;
+				GetObject(hFont, sizeof(LOGFONT), &logfont);
+				logfont.lfHeight = 20;
+				HFONT hNewFont = CreateFontIndirect(&logfont);
+				HFONT hOldFont = (HFONT)SelectObject(hdc, hNewFont);
 
 				for (int i = 0; i < clusterFrameIndex; ++i) {
 					const RECT* frameL = new RECT({clusterFrames[i].minW-10, clusterFrames[i].maxH+10, clusterFrames[i].minW-5, clusterFrames[i].minH-10});
@@ -296,11 +306,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					const RECT* frameB = new RECT({ clusterFrames[i].minW-10, clusterFrames[i].minH-5, clusterFrames[i].maxW+10, clusterFrames[i].minH-10});
 					FillRect(hdc, frameB, frameColor);
 					
-					printf("Frame count: %d\t Frame Size: %d\n", i, clusterFrames[i].size);
-					printf("\t W: %d %d \tH: %d %d\n", clusterFrames[i].minW, clusterFrames[i].maxW, clusterFrames[i].minH, clusterFrames[i].maxW);
-					//printf("RECT STATUS: %d\n", FillRect(hdc, frame, frameColor));
-					//printf("W %d %d\tH %d %d\n", clusterFrames[i].minW, clusterFrames[i].maxW, clusterFrames[i].maxH, clusterFrames[i].minH);
+					//printf("Frame count: %d\t Frame Size: %d\n", i, clusterFrames[i].size);
+					//printf("\t W: %d %d \tH: %d %d\n", clusterFrames[i].minW, clusterFrames[i].maxW, clusterFrames[i].minH, clusterFrames[i].maxW);
+
+					RECT textBound = { clusterFrames[i].minW-5, clusterFrames[i].maxH - 15, clusterFrames[i].maxW+5, clusterFrames[i].maxH+5};
+					//FillRect(hdc, &textBound, frameColor);			
+					//TextOut(hdc, clusterFrames[i].minW - 5, clusterFrames[i].maxH - 25, frameNames[i], strlen(frameNames[i]));
+					DrawText(hdc, frameNames[i], strlen(frameNames[i]), &textBound, DT_BOTTOM);
 				}
+
+				SelectObject(hdc, hOldFont);
+				DeleteObject(hNewFont);
 
 				EndPaint(hWnd, &ps);
 			}

@@ -55,7 +55,7 @@ private:
 	int		numObjs;
 	int		objIndex;
 	histograms*	objsHistograms;
-	unsigned int* inputHistogram;
+	
 	char* fileName;
 
 public:
@@ -103,7 +103,7 @@ public:
 	detectionFrames* objDetect(int i);
 
 	void bfs(char* pixelData, int index, clusterData* ptr);
-	detectionFrames* clusteringFunction(char* pixelData);
+	detectionFrames* clusteringFunction(char* pixelData, char* name);
 
 	double compareHistogram(unsigned int* objHist, range* satHist, int startW, int startH, int endW, int endH, int avg, int bins, boolean checkgreen);
 	bool checkSurroundingPixels(int index);

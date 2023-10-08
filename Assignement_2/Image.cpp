@@ -19,7 +19,7 @@ MyImage::MyImage()
 	numObjs = 0;
 
 	objsHistograms = NULL;
-	inputHistogram = NULL;
+
 }
 
 MyImage::~MyImage()
@@ -29,9 +29,6 @@ MyImage::~MyImage()
 
 	if (objsHistograms)
 		delete objsHistograms;
-
-	if (inputHistogram)
-		delete inputHistogram;
 }
 
 
@@ -196,10 +193,9 @@ void MyImage::setImagePath(const char* path) {
 
 	int modPtr = 0;
 	for (int i = 0; ImagePath[i] != 0; ++i) {
-		if (ImagePath[i] == '/' && ImagePath[i + 1] != 0) modPtr = i + 1;
+		if (ImagePath[i] == '\\' && ImagePath[i + 1] != 0) modPtr = i + 1;
 	}
 	fileName = ImagePath + modPtr;
-
 }
 
 
@@ -236,7 +232,7 @@ HSL rgbToHSL(int _red, int _blue, int _green) {
 	int hue = round(h * 60);
 	if (hue == 360) hue = 0;
 	if (hue < 0 || hue >= 360) {
-		printf("RED: %d\t\tGREEN: %d\tBLUE: %d\n", _red, _green, _blue);
+		//printf("RED: %d\t\tGREEN: %d\tBLUE: %d\n", _red, _green, _blue);
 		hue = -1;
 	}
 
@@ -315,7 +311,10 @@ unsigned int* MyImage::buildHistogram() {
 		else if (sat < satHist[hue].min) satHist[hue].min = sat;
 	}
 
-	histograms ret = { hueHist, satHist, ImagePath };
+	char* name = new char[strlen(fileName)];
+	strcpy(name, fileName);
+	histograms ret = { hueHist, satHist, name };
+	
 
 	objsHistograms[objIndex] = ret;
 	++objIndex;
@@ -356,7 +355,7 @@ void MyImage::bfs(char* pixelData, int index, clusterData* clusterPtr) {
 }
 
 
-MyImage::detectionFrames* MyImage::clusteringFunction(char* pixelData) {
+MyImage::detectionFrames* MyImage::clusteringFunction(char* pixelData, char* name) {
 	clusterData** arr = new clusterData * [250];
 	for (int i = 0; i < 250; ++i) arr[i] = NULL;
 
@@ -388,7 +387,7 @@ MyImage::detectionFrames* MyImage::clusteringFunction(char* pixelData) {
 		delete arr[i];
 	}
 	delete[] arr;
-	MyImage::detectionFrames* ret = new MyImage::detectionFrames({ cleanArr, clusterId, fileName });
+	MyImage::detectionFrames* ret = new MyImage::detectionFrames({ cleanArr, clusterId, name });
 	return ret;
 }
 
@@ -471,7 +470,7 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 		else idealPixels[i / 3] = 0;
 	}
 
-	printf("%d %d\n", relevantBins, bins);
+	//printf("%d %d\n", relevantBins, bins);
 
 	if (relevantBins < 25) idealPixels = avgFilter(idealPixels, Width, Height, 0.75);
 	if (bins - relevantBins > 50) idealPixels = avgFilter(idealPixels, Width, Height, 0.8);
@@ -494,7 +493,7 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 	//--------------------------------------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------------------------------------
 
-	detectionFrames* clusters = clusteringFunction(idealPixels);
+	detectionFrames* clusters = clusteringFunction(idealPixels, objsHistograms[histIndex].name);
 
 	int validClusters = 0;
 	for (int i = 0; i < clusters->frameCounts; ++i) {
@@ -518,7 +517,7 @@ MyImage::detectionFrames* MyImage::objDetect(int histIndex) {
 
 		//printf("clusterStatus:\t%f\n", clusterStatus);
 
-		///**
+		/**
 		printf("ClusterId: %d\n", i);
 		printf("\tSize: %d\n", clusters->frames[i].size);
 		printf("\tRanges: %d %d %d %d\n", clusters->frames[i].minH, clusters->frames[i].minW, clusters->frames[i].maxH, clusters->frames[i].maxW);
