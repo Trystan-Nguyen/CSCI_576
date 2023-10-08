@@ -91,15 +91,15 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		inImage.ReadImage();
 		unsigned int* hueHist = inImage.buildHistogram();
 
-		//char name[25];
-		//sprintf(name, "test/args-%i.txt", i);
-		//inImage.saveHist(name, hueHist);
+		/**
+		char name[25];
+		sprintf(name, "test/args-%i.txt", i);
+		inImage.saveHist(name, hueHist);
+		*/
 	}
 
 	inImage.setImagePath(argsPtr[0]);
 	inImage.ReadImage();
-	////unsigned int* hueHist = inImage.buildHistogram();
-	//inImage.saveHist("test/input.txt", hueHist);
 	
 	///**
 	for (int i = 0; i < numArgs - 1; ++i) {
