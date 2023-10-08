@@ -105,7 +105,7 @@ public:
 	void bfs(char* pixelData, int index, clusterData* ptr);
 	detectionFrames* clusteringFunction(char* pixelData);
 
-	double compareHistogram(unsigned int* objHist, range* satHist, int startW, int startH, int endW, int endH, int avg, int bins);
+	double compareHistogram(unsigned int* objHist, range* satHist, int startW, int startH, int endW, int endH, int avg, int bins, boolean checkgreen);
 	bool checkSurroundingPixels(int index);
 };
 
