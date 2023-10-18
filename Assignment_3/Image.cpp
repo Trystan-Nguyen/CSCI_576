@@ -185,7 +185,7 @@ bool MyImage::WriteImage()
 
 void MyImage::horizontalDWT(int level, double* _red, double*_green, double*_blue) {
 	int length = Width/2;
-	for (int l = 9; l >= level; --l) {
+	for (int l = 9; l > level; --l) {
 		double* dwt_r = new double[Width * Height];
 		double* dwt_g = new double[Width * Height];
 		double* dwt_b = new double[Width * Height];
@@ -215,17 +215,18 @@ void MyImage::horizontalDWT(int level, double* _red, double*_green, double*_blue
 		}
 
 		if (levels == -1) {
+			printf("%d\n", l);
 			verticalDWT(l, dwt_r, dwt_g, dwt_b);
 			zeroHighPass(l, dwt_r, dwt_g, dwt_b);
 			reverseVerticalDWT(l, dwt_r, dwt_g, dwt_b);
-			reverseHorizontalDWT(l-1, dwt_r, dwt_g, dwt_b);
+			reverseHorizontalDWT(max(l-1, 0), dwt_r, dwt_g, dwt_b);
 			char* levelData = new char[Width * Height * 3];
 			for (int i = 0; i < Width * Height * 3; i += 3) {
 				levelData[i + 0] = int(dwt_b[i / 3]) & 0xFF;
 				levelData[i + 1] = int(dwt_g[i / 3]) & 0xFF;
 				levelData[i + 2] = int(dwt_r[i / 3]) & 0xFF;
 			}
-			dataArr[l - 1] = levelData;
+			dataArr[l] = levelData;
 		}
 
 		delete[] dwt_r;
@@ -399,17 +400,17 @@ void MyImage::Modify(){
 	}
 	else {
 		dataArr = new char*[10];
-		dataArr[9] = Data;
+		//dataArr[9] = Data;
 
-		horizontalDWT(1, _r, _g, _b);
-		verticalDWT(1, _r, _g, _b);
+		horizontalDWT(-1, _r, _g, _b);
+		verticalDWT(-1, _r, _g, _b);
 
-		zeroHighPass(1, _r, _g, _b);
+		zeroHighPass(-1, _r, _g, _b);
 
-		reverseVerticalDWT(1, _r, _g, _b);
-		reverseHorizontalDWT(1, _r, _g, _b);
+		reverseVerticalDWT(-1, _r, _g, _b);
+		reverseHorizontalDWT(-1, _r, _g, _b);
 
-		int l = 3;
+		int l = 1;
 		for (int i = 0; i < Width * Height * 3; i += 3) {
 			Data[i + 0] = dataArr[l][i + 0];
 			Data[i + 1] = dataArr[l][i + 1];
