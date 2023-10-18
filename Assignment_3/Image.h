@@ -35,9 +35,11 @@ private:
 	int		Height;					// Height of Image
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
-	int* _red = NULL;
-	int* _blue = NULL;
-	int* _green = NULL;
+	double* _red = NULL;
+	double* _blue = NULL;
+	double* _green = NULL;
+
+	char** dataArr = NULL;
 
 	int levels = 0;
 

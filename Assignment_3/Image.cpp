@@ -86,9 +86,9 @@ bool MyImage::ReadImage()
 
 	// Create and populate RGB buffers
 	int i;
-	int *Rbuf = new int[Height*Width]; 
-	int *Gbuf = new int[Height*Width]; 
-	int *Bbuf = new int[Height*Width]; 
+	double*Rbuf = new double[Height*Width];
+	double*Gbuf = new double[Height*Width];
+	double*Bbuf = new double[Height*Width];
 
 	for (i = 0; i < Width*Height; i ++)
 	{
@@ -186,9 +186,14 @@ bool MyImage::WriteImage()
 void MyImage::horizontalDWT() {
 	int length = Width/2;
 	for (int l = 9; l > levels; --l) {
-		int* dwt_r = new int[Width * Height];
-		int* dwt_g = new int[Width * Height];
-		int* dwt_b = new int[Width * Height];
+		double* dwt_r = new double[Width * Height];
+		double* dwt_g = new double[Width * Height];
+		double* dwt_b = new double[Width * Height];
+		for (int i = 0; i < Width * Height; ++i) {
+			dwt_r[i] = _red[i];
+			dwt_g[i] = _green[i];
+			dwt_b[i] = _blue[i];
+		}
 
 		for(int h = 0; h < Height; ++h){
 			for (int i = 0; i < length; ++i) {
@@ -217,20 +222,26 @@ void MyImage::horizontalDWT() {
 void MyImage::verticalDWT() {
 	int length = Height / 2;
 	for (int l = 9; l > levels; --l) {
-		int* dwt_r = new int[Width * Height];
-		int* dwt_g = new int[Width * Height];
-		int* dwt_b = new int[Width * Height];
+		printf("Encode: %d\n", length);
+		double* dwt_r = new double[Width * Height];
+		double* dwt_g = new double[Width * Height];
+		double* dwt_b = new double[Width * Height];
+		for (int i = 0; i < Width * Height; ++i) {
+			dwt_r[i] = _red[i];
+			dwt_g[i] = _green[i];
+			dwt_b[i] = _blue[i];
+		}
 
 		for (int w = 0; w < Width; ++w) {
 			for (int i = 0; i < length; ++i) {
-				dwt_r[Width * i + w] = (_red[Width * i * 2 + w] + _red[Width * ((i + 1) * 2) + w])/2;
-				dwt_r[Width * (i + length) + w] = (_red[Width * i * 2 + w] - _red[Width * ((i + 1) * 2) + w])/2;
+				dwt_r[Width * i + w] = (_red[Width * i * 2 + w] + _red[Width * (i * 2 + 1) + w])/2;
+				dwt_r[Width * (i + length) + w] = (_red[Width * i * 2 + w] - _red[Width * (i * 2 + 1) + w])/2;
 
-				dwt_g[Width * i + w] = (_green[Width * i * 2 + w] + _green[Width * ((i + 1) * 2) + w])/2;
-				dwt_g[Width * (i + length) + w] = (_green[Width * i * 2 + w] - _green[Width * ((i + 1) * 2) + w])/2;
+				dwt_g[Width * i + w] = (_green[Width * i * 2 + w] + _green[Width * (i * 2 + 1) + w])/2;
+				dwt_g[Width * (i + length) + w] = (_green[Width * i * 2 + w] - _green[Width * (i * 2 + 1) + w])/2;
 
-				dwt_b[Width * i + w] = (_blue[Width * i * 2 + w] + _blue[Width * ((i + 1) * 2) + w])/2;
-				dwt_b[Width * (i + length) + w] = (_blue[Width * i * 2 + w] - _blue[Width * ((i + 1) * 2) + w])/2;
+				dwt_b[Width * i + w] = (_blue[Width * i * 2 + w] + _blue[Width * (i * 2 + 1) + w])/2;
+				dwt_b[Width * (i + length) + w] = (_blue[Width * i * 2 + w] - _blue[Width * (i * 2 + 1) + w])/2;
 			}
 		}
 
@@ -250,7 +261,8 @@ void MyImage::zeroHighPass() {
 	int limit = Width / pow(2, 9 - levels);
 	for (int h = 0; h < Height; ++h) {
 		for (int w = 0; w < Width; ++w) {
-			if (h > limit || w > limit) {
+			if (h >= limit || w >= limit) {
+			//if (w >= limit) {
 				_red[h * Width + w] = 0;
 				_green[h * Width + w] = 0;
 				_blue[h * Width + w] = 0;
@@ -262,23 +274,28 @@ void MyImage::zeroHighPass() {
 
 void MyImage::reverseVerticalDWT() {
 	int length = Height / pow(2, 9 - levels);
+	
 	for (int l = 9; l > levels; --l) {
-		int* dwt_r = new int[Width * Height];
-		int* dwt_g = new int[Width * Height];
-		int* dwt_b = new int[Width * Height];
+		printf("Decode: %d\n", length);
+		double* dwt_r = new double[Width * Height];
+		double* dwt_g = new double[Width * Height];
+		double* dwt_b = new double[Width * Height];
+		for (int i = 0; i < Width * Height; ++i) {
+			dwt_r[i] = _red[i];
+			dwt_g[i] = _green[i];
+			dwt_b[i] = _blue[i];
+		}
 
 		for (int w = 0; w < Width; ++w) {
 			for (int i = 0; i < length; ++i) {
-				dwt_r[Width * i + w] = (_red[Width * i * 2 + w] + _red[Width * ((i + 1) * 2) + w])/2;
-				dwt_r[Width * (i + length) + w] = (_red[Width * i * 2 + w] - _red[Width * ((i + 1) * 2) + w])/2;
+				dwt_r[Width * 2 * i + w] = _red[Width * i + w] + _red[Width * (i + length) + w];
+				dwt_r[Width * (2 * i + 1) + w] = _red[Width * i + w] - _red[Width * (i + length) + w];
 
-				/**
-				dwt_g[Width * i + w] = (_green[Width * i * 2 + w] + _green[Width * ((i + 1) * 2) + w])/2;
-				dwt_g[Width * (i + length) + w] = (_green[Width * i * 2 + w] - _green[Width * ((i + 1) * 2) + w])/2;
+				dwt_g[Width * 2 * i + w] = _green[Width * i + w] + _green[Width * (i + length) + w];
+				dwt_g[Width * (2 * i + 1) + w] = _green[Width * i + w] - _green[Width * (i + length) + w];
 
-				dwt_b[Width * i + w] = (_blue[Width * i * 2 + w] + _blue[Width * ((i + 1) * 2) + w])/2;
-				dwt_b[Width * (i + length) + w] = (_blue[Width * i * 2 + w] - _blue[Width * ((i + 1) * 2) + w])/2;
-				*/
+				dwt_b[Width * 2 * i + w] = _blue[Width * i + w] + _blue[Width * (i + length) + w];
+				dwt_b[Width * (2 * i + 1) + w] = _blue[Width * i + w] - _blue[Width * (i + length) + w];
 			}
 		}
 
@@ -295,7 +312,40 @@ void MyImage::reverseVerticalDWT() {
 }
 
 void MyImage::reverseHorizontalDWT() {
+	int length = Height / pow(2, 9 - levels);
 
+	for (int l = 9; l > levels; --l) {
+		double* dwt_r = new double[Width * Height];
+		double* dwt_g = new double[Width * Height];
+		double* dwt_b = new double[Width * Height];
+		for (int i = 0; i < Width * Height; ++i) {
+			dwt_r[i] = _red[i];
+			dwt_g[i] = _green[i];
+			dwt_b[i] = _blue[i];
+		}
+
+		for (int h = 0; h < Height; ++h) {
+			for (int i = 0; i < length; ++i) {
+				dwt_r[Width * h + 2 * i] = _red[(Width * h) + i] + _red[(Width * h) + i + length];
+				dwt_r[Width * h + 2 * i + 1] = _red[(Width * h) + i] - _red[(Width * h) + i + length];
+
+				dwt_g[Width * h + 2 * i] = _green[(Width * h) + i] + _green[(Width * h) + i + length];
+				dwt_g[Width * h + 2 * i + 1] = _green[(Width * h) + i] - _green[(Width * h) + i + length];
+
+				dwt_b[Width * h + 2 * i] = _blue[(Width * h) + i] + _blue[(Width * h) + i + length];
+				dwt_b[Width * h + 2 * i + 1] = _blue[(Width * h) + i] - _blue[(Width * h) + i + length];
+			}
+		}
+		delete[] _red;
+		delete[] _green;
+		delete[] _blue;
+
+		_red = dwt_r;
+		_green = dwt_g;
+		_blue = dwt_b;
+
+		length *= 2;
+	}
 }
 
 // Here is where you would place your code to modify an image
@@ -311,18 +361,18 @@ void MyImage::Modify(){
 	}
 	*/
 
-	//horizontalDWT();
+	horizontalDWT();
 	verticalDWT();
 
 	zeroHighPass();
 
 	reverseVerticalDWT();
-	//reverseHorizontalDWT();
+	reverseHorizontalDWT();
 
 
 	for (int i = 0; i < Width * Height * 3; i += 3) {
-		Data[i + 0] = _blue[i / 3];
-		Data[i + 1] = _green[i / 3];
-		Data[i + 2] = _red[i / 3];
+		Data[i + 0] = int(_blue[i / 3]) & 0xFF;
+		Data[i + 1] = int(_green[i / 3]) & 0xFF;
+		Data[i + 2] = int(_red[i / 3]) & 0xFF;
 	}
 }
