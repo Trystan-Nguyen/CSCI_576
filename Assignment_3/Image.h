@@ -35,9 +35,9 @@ private:
 	int		Height;					// Height of Image
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
-	double* _red = NULL;
-	double* _blue = NULL;
-	double* _green = NULL;
+	double* _r = NULL;
+	double* _b = NULL;
+	double* _g = NULL;
 
 	char** dataArr = NULL;
 
@@ -73,11 +73,11 @@ public:
 	// Modifications
 	void Modify();
 	void setLevels(int i) { levels = i; };
-	void horizontalDWT();
-	void verticalDWT();
-	void zeroHighPass();
-	void reverseVerticalDWT();
-	void reverseHorizontalDWT();
+	void horizontalDWT(int level, double* _red, double* _green, double* _blue);
+	void verticalDWT(int level, double* _red, double* _green, double* _blue);
+	void zeroHighPass(int level, double* _red, double* _green, double* _blue);
+	void reverseVerticalDWT(int level, double* _red, double* _green, double* _blue);
+	void reverseHorizontalDWT(int level, double* _red, double* _green, double* _blue);
 
 };
 

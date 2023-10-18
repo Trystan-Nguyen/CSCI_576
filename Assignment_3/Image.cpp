@@ -113,9 +113,9 @@ bool MyImage::ReadImage()
 	}
 
 	// Clean up and return
-	_red = Rbuf;
-	_blue = Bbuf;
-	_green = Gbuf;
+	_r = Rbuf;
+	_b = Bbuf;
+	_g = Gbuf;
 	fclose(IN_FILE);
 
 	return true;
@@ -183,9 +183,9 @@ bool MyImage::WriteImage()
 
 }
 
-void MyImage::horizontalDWT() {
+void MyImage::horizontalDWT(int level, double* _red, double*_green, double*_blue) {
 	int length = Width/2;
-	for (int l = 9; l > levels; --l) {
+	for (int l = 9; l >= level; --l) {
 		double* dwt_r = new double[Width * Height];
 		double* dwt_g = new double[Width * Height];
 		double* dwt_b = new double[Width * Height];
@@ -207,22 +207,38 @@ void MyImage::horizontalDWT() {
 				dwt_b[Width * h + i + length] = (_blue[(Width * h) + (2 * i)] - _blue[(Width * h) + (2 * i) + 1])/2;
 			}
 		}
-		delete[] _red;
-		delete[] _green;
-		delete[] _blue;
 
-		_red = dwt_r;
-		_green = dwt_g;
-		_blue = dwt_b;
+		for (int i = 0; i < Width * Height; ++i) {
+			_red[i] = dwt_r[i];
+			_green[i] = dwt_g[i];
+			_blue[i] = dwt_b[i];
+		}
+
+		if (levels == -1) {
+			verticalDWT(l, dwt_r, dwt_g, dwt_b);
+			zeroHighPass(l, dwt_r, dwt_g, dwt_b);
+			reverseVerticalDWT(l, dwt_r, dwt_g, dwt_b);
+			reverseHorizontalDWT(l-1, dwt_r, dwt_g, dwt_b);
+			char* levelData = new char[Width * Height * 3];
+			for (int i = 0; i < Width * Height * 3; i += 3) {
+				levelData[i + 0] = int(dwt_b[i / 3]) & 0xFF;
+				levelData[i + 1] = int(dwt_g[i / 3]) & 0xFF;
+				levelData[i + 2] = int(dwt_r[i / 3]) & 0xFF;
+			}
+			dataArr[l - 1] = levelData;
+		}
+
+		delete[] dwt_r;
+		delete[] dwt_g;
+		delete[] dwt_b;
 
 		length /= 2;
 	}
 }
 
-void MyImage::verticalDWT() {
+void MyImage::verticalDWT(int level, double* _red, double* _green, double* _blue) {
 	int length = Height / 2;
-	for (int l = 9; l > levels; --l) {
-		printf("Encode: %d\n", length);
+	for (int l = 9; l > level; --l) {
 		double* dwt_r = new double[Width * Height];
 		double* dwt_g = new double[Width * Height];
 		double* dwt_b = new double[Width * Height];
@@ -245,24 +261,25 @@ void MyImage::verticalDWT() {
 			}
 		}
 
-		delete[] _red;
-		delete[] _green;
-		delete[] _blue;
+		for (int i = 0; i < Width * Height; ++i) {
+			_red[i] = dwt_r[i];
+			_green[i] = dwt_g[i];
+			_blue[i] = dwt_b[i];
+		}
 
-		_red = dwt_r;
-		_green = dwt_g;
-		_blue = dwt_b;
+		delete[] dwt_r;
+		delete[] dwt_g;
+		delete[] dwt_b;
 
 		length /= 2;
 	}
 }
 
-void MyImage::zeroHighPass() {
-	int limit = Width / pow(2, 9 - levels);
+void MyImage::zeroHighPass(int level, double* _red, double* _green, double* _blue) {
+	int limit = Width / pow(2, 9 - level);
 	for (int h = 0; h < Height; ++h) {
 		for (int w = 0; w < Width; ++w) {
 			if (h >= limit || w >= limit) {
-			//if (w >= limit) {
 				_red[h * Width + w] = 0;
 				_green[h * Width + w] = 0;
 				_blue[h * Width + w] = 0;
@@ -272,11 +289,10 @@ void MyImage::zeroHighPass() {
 
 }
 
-void MyImage::reverseVerticalDWT() {
-	int length = Height / pow(2, 9 - levels);
+void MyImage::reverseVerticalDWT(int level, double* _red, double* _green, double* _blue) {
+	int length = Height / pow(2, 9 - level);
 	
-	for (int l = 9; l > levels; --l) {
-		printf("Decode: %d\n", length);
+	for (int l = 9; l > level; --l) {
 		double* dwt_r = new double[Width * Height];
 		double* dwt_g = new double[Width * Height];
 		double* dwt_b = new double[Width * Height];
@@ -299,22 +315,24 @@ void MyImage::reverseVerticalDWT() {
 			}
 		}
 
-		delete[] _red;
-		delete[] _green;
-		delete[] _blue;
+		for (int i = 0; i < Width * Height; ++i) {
+			_red[i] = dwt_r[i];
+			_green[i] = dwt_g[i];
+			_blue[i] = dwt_b[i];
+		}
 
-		_red = dwt_r;
-		_green = dwt_g;
-		_blue = dwt_b;
+		delete[] dwt_r;
+		delete[] dwt_g;
+		delete[] dwt_b;
 
 		length *= 2;
 	}
 }
 
-void MyImage::reverseHorizontalDWT() {
-	int length = Height / pow(2, 9 - levels);
+void MyImage::reverseHorizontalDWT(int level, double* _red, double* _green, double* _blue) {
+	int length = Height / pow(2, 9 - level);
 
-	for (int l = 9; l > levels; --l) {
+	for (int l = 9; l > level; --l) {
 		double* dwt_r = new double[Width * Height];
 		double* dwt_g = new double[Width * Height];
 		double* dwt_b = new double[Width * Height];
@@ -336,13 +354,16 @@ void MyImage::reverseHorizontalDWT() {
 				dwt_b[Width * h + 2 * i + 1] = _blue[(Width * h) + i] - _blue[(Width * h) + i + length];
 			}
 		}
-		delete[] _red;
-		delete[] _green;
-		delete[] _blue;
 
-		_red = dwt_r;
-		_green = dwt_g;
-		_blue = dwt_b;
+		for (int i = 0; i < Width * Height; ++i) {
+			_red[i] = dwt_r[i];
+			_green[i] = dwt_g[i];
+			_blue[i] = dwt_b[i];
+		}
+
+		delete[] dwt_r;
+		delete[] dwt_g;
+		delete[] dwt_b;
 
 		length *= 2;
 	}
@@ -361,18 +382,40 @@ void MyImage::Modify(){
 	}
 	*/
 
-	horizontalDWT();
-	verticalDWT();
+	if (levels != -1) {
+		horizontalDWT(levels, _r, _g, _b);
+		verticalDWT(levels, _r, _g, _b);
 
-	zeroHighPass();
+		zeroHighPass(levels, _r, _g, _b);
 
-	reverseVerticalDWT();
-	reverseHorizontalDWT();
+		reverseVerticalDWT(levels, _r, _g, _b);
+		reverseHorizontalDWT(levels, _r, _g, _b);
 
-
-	for (int i = 0; i < Width * Height * 3; i += 3) {
-		Data[i + 0] = int(_blue[i / 3]) & 0xFF;
-		Data[i + 1] = int(_green[i / 3]) & 0xFF;
-		Data[i + 2] = int(_red[i / 3]) & 0xFF;
+		for (int i = 0; i < Width * Height * 3; i += 3) {
+			Data[i + 0] = int(_b[i / 3]) & 0xFF;
+			Data[i + 1] = int(_g[i / 3]) & 0xFF;
+			Data[i + 2] = int(_r[i / 3]) & 0xFF;
+		}
 	}
+	else {
+		dataArr = new char*[10];
+		dataArr[9] = Data;
+
+		horizontalDWT(1, _r, _g, _b);
+		verticalDWT(1, _r, _g, _b);
+
+		zeroHighPass(1, _r, _g, _b);
+
+		reverseVerticalDWT(1, _r, _g, _b);
+		reverseHorizontalDWT(1, _r, _g, _b);
+
+		int l = 3;
+		for (int i = 0; i < Width * Height * 3; i += 3) {
+			Data[i + 0] = dataArr[l][i + 0];
+			Data[i + 1] = dataArr[l][i + 1];
+			Data[i + 2] = dataArr[l][i + 2];
+		}
+	}
+
+	
 }
