@@ -410,7 +410,7 @@ void MyImage::Modify(){
 		reverseVerticalDWT(-1, _r, _g, _b);
 		reverseHorizontalDWT(-1, _r, _g, _b);
 
-		int l = 1;
+		int l = 9;
 		for (int i = 0; i < Width * Height * 3; i += 3) {
 			Data[i + 0] = dataArr[l][i + 0];
 			Data[i + 1] = dataArr[l][i + 1];

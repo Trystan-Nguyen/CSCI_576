@@ -33,6 +33,7 @@ LRESULT CALLBACK	WndProc_9(HWND, UINT, WPARAM, LPARAM);
 
 int numArgs = 1;
 HWND* windowArr = NULL;
+int windowIndex = 0;
 
 // Main entry point for a windows application
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -92,13 +93,13 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	LoadString(hInstance, IDC_IMAGE, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance, WndProc);
 
-	if (inImage.getLevel() != -1) {
+	//if (inImage.getLevel() != -1) {
 		// Perform application initialization:
 		if (!InitInstance(hInstance, nCmdShow))
 		{
 			return FALSE;
 		}
-	}
+	/** }
 	else {
 		windowArr = new HWND[10];
 		for (int i = 0; i < 10; ++i) windowArr[i] = HWND();
@@ -109,6 +110,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			windowArr[i] = handle;
 		}
 	}
+	*/
 
 	hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_IMAGE);
 
@@ -190,6 +192,8 @@ HWND InitInstance(HINSTANCE hInstance, int nCmdShow)
    SetWindowPos(hWnd, NULL, 0, 0, inImage.getWidth() + 15, inImage.getHeight() + 60,
 	   SWP_NOMOVE);
 
+   if (inImage.getLevel()==-1) SetTimer(hWnd, 500, 500, NULL);
+
    return hWnd;
 }
 
@@ -238,6 +242,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
 			break;
+
+		case WM_TIMER:
+			if (wParam == 500 && windowIndex < 9)
+			{
+				++windowIndex;				
+				InvalidateRect(hWnd, &rt, false);
+			}
+			break;
+
 		case WM_PAINT:
 			{
 				hdc = BeginPaint(hWnd, &ps);
@@ -253,25 +266,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				bmi.bmiHeader.biCompression = BI_RGB;
 				bmi.bmiHeader.biSizeImage = inImage.getWidth()*inImage.getHeight();
 
-				if (inImage.getLevel() != -1) {
+				if (inImage.getLevel() != -1 || windowIndex >= 9) {
 					SetDIBitsToDevice(hdc,
 						0, 0, inImage.getWidth(), inImage.getHeight(),
 						0, 0, 0, inImage.getHeight(),
 						inImage.getImageData(), &bmi, DIB_RGB_COLORS);
 				}
 				else {
-					int index = 0;
-					for (int i = 0; i < 10; ++i) {
-						if (hWnd == windowArr[i]) {
-							index = i;
-							break;
-						}
-					}
 					SetDIBitsToDevice(hdc,
 						0, 0, inImage.getWidth(), inImage.getHeight(),
 						0, 0, 0, inImage.getHeight(),
-						inImage.getDataLevel(index), &bmi, DIB_RGB_COLORS);
-					//SendMessage(hWnd, WM_SETREDRAW, FALSE, 0);
+						inImage.getDataLevel(windowIndex), &bmi, DIB_RGB_COLORS);
 				}
 							   
 				EndPaint(hWnd, &ps);
@@ -282,8 +287,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
-   }
-   return 0;
+	}
+
+	
+	return 0;
 }
 
 
