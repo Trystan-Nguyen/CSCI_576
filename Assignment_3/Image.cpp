@@ -215,7 +215,7 @@ void MyImage::horizontalDWT(int level, double* _red, double*_green, double*_blue
 		}
 
 		if (levels == -1) {
-			printf("%d\n", l);
+			//printf("%d\n", l);
 			verticalDWT(l, dwt_r, dwt_g, dwt_b);
 			zeroHighPass(l, dwt_r, dwt_g, dwt_b);
 			reverseVerticalDWT(l, dwt_r, dwt_g, dwt_b);

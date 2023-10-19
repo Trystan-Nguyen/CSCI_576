@@ -79,6 +79,8 @@ public:
 	void reverseVerticalDWT(int level, double* _red, double* _green, double* _blue);
 	void reverseHorizontalDWT(int level, double* _red, double* _green, double* _blue);
 
+	char* getDataLevel(int l) { return dataArr != NULL ? dataArr[l] : NULL; };
+	int getLevel() { return levels; };
 };
 
 #endif //IMAGE_DISPLAY

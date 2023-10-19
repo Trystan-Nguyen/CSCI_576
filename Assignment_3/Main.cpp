@@ -24,12 +24,15 @@ TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// The title bar text
 
 // Foward declarations of functions included in this code module:
-ATOM				MyRegisterClass(HINSTANCE hInstance);
-BOOL				InitInstance(HINSTANCE, int);
+ATOM				MyRegisterClass(HINSTANCE hInstance, WNDPROC process);
+HWND				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
+LRESULT CALLBACK	WndProc_9(HWND, UINT, WPARAM, LPARAM);
+
 int numArgs = 1;
+HWND* windowArr = NULL;
 
 // Main entry point for a windows application
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -63,10 +66,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		}
 	}
 
+	/**
 	for (int i = 0; i < numArgs; ++i) {
 		if (i!=1) printf("%s\n", argsPtr[i]);
 		else printf("%d\n", atoi(argsPtr[i]));
 	}
+	*/
 
 	// Set up the images
 	int w = 512;
@@ -85,12 +90,24 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_IMAGE, szWindowClass, MAX_LOADSTRING);
-	MyRegisterClass(hInstance);
+	MyRegisterClass(hInstance, WndProc);
 
-	// Perform application initialization:
-	if (!InitInstance (hInstance, nCmdShow)) 
-	{
-		return FALSE;
+	if (inImage.getLevel() != -1) {
+		// Perform application initialization:
+		if (!InitInstance(hInstance, nCmdShow))
+		{
+			return FALSE;
+		}
+	}
+	else {
+		windowArr = new HWND[10];
+		for (int i = 0; i < 10; ++i) windowArr[i] = HWND();
+		for (int i = 0; i < 10; ++i) {
+			// Perform application initialization:
+			HWND handle = InitInstance(hInstance, nCmdShow);
+			if (!handle) return FALSE;
+			windowArr[i] = handle;
+		}
 	}
 
 	hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_IMAGE);
@@ -121,7 +138,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 //    so that the application will get 'well formed' small icons associated
 //    with it.
 //
-ATOM MyRegisterClass(HINSTANCE hInstance)
+ATOM MyRegisterClass(HINSTANCE hInstance, WNDPROC process)
 {
 	WNDCLASSEX wcex;
 
@@ -153,7 +170,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+HWND InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
 
@@ -164,7 +181,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    if (!hWnd)
    {
-      return FALSE;
+      return hWnd;
    }
    
    ShowWindow(hWnd, nCmdShow);
@@ -173,7 +190,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    SetWindowPos(hWnd, NULL, 0, 0, inImage.getWidth() + 15, inImage.getHeight() + 60,
 	   SWP_NOMOVE);
 
-   return TRUE;
+   return hWnd;
 }
 
 
@@ -236,10 +253,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				bmi.bmiHeader.biCompression = BI_RGB;
 				bmi.bmiHeader.biSizeImage = inImage.getWidth()*inImage.getHeight();
 
-				SetDIBitsToDevice(hdc,
-								  0,0,inImage.getWidth(),inImage.getHeight(),
-								  0,0,0,inImage.getHeight(),
-								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
+				if (inImage.getLevel() != -1) {
+					SetDIBitsToDevice(hdc,
+						0, 0, inImage.getWidth(), inImage.getHeight(),
+						0, 0, 0, inImage.getHeight(),
+						inImage.getImageData(), &bmi, DIB_RGB_COLORS);
+				}
+				else {
+					int index = 0;
+					for (int i = 0; i < 10; ++i) {
+						if (hWnd == windowArr[i]) {
+							index = i;
+							break;
+						}
+					}
+					SetDIBitsToDevice(hdc,
+						0, 0, inImage.getWidth(), inImage.getHeight(),
+						0, 0, 0, inImage.getHeight(),
+						inImage.getDataLevel(index), &bmi, DIB_RGB_COLORS);
+					//SendMessage(hWnd, WM_SETREDRAW, FALSE, 0);
+				}
 							   
 				EndPaint(hWnd, &ps);
 			}
@@ -252,6 +285,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
    }
    return 0;
 }
+
+
+
+
 
 
 
