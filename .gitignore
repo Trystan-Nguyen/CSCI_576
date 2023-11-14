@@ -405,3 +405,5 @@ FodyWeavers.xsd
 *.png
 *.jpeg
 *.txt
+*.wav
+*.mp4
