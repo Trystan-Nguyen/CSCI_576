@@ -133,10 +133,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CSCI576_FinalProject.cpp" />
+    <ClCompile Include="DominantColorList.cpp" />
     <ClCompile Include="SceneData.cpp" />
     <ClCompile Include="VideoHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DominantColorList.h" />
     <ClInclude Include="SceneData.h" />
     <ClInclude Include="VideoHandler.h" />
   </ItemGroup>

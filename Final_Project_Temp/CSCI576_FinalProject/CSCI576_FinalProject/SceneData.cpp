@@ -13,9 +13,14 @@ SceneData::~SceneData() {
 	if (!hueHist) delete[] hueHist;
 }
 
-void SceneData::addFrame(int* img) {
-	for (int i = 0; i < Width * Height/4; ++i) {
+void SceneData::addFrame(int* hist) {
+	/*
+	for (int i = 0; i < Width * Height/25; ++i) {
 		++hueHist[img[i]];
+	}
+	*/
+	for (int i = 0; i < 360; ++i) {
+		hueHist[i] += hist[i];
 	}
 	++frameCount;
 }

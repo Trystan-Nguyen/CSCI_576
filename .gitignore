@@ -407,3 +407,5 @@ FodyWeavers.xsd
 *.txt
 *.wav
 *.mp4
+*.vec
+*.hue

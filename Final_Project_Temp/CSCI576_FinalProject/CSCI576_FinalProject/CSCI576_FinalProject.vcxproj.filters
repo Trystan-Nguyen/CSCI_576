@@ -24,12 +24,18 @@
     <ClCompile Include="SceneData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DominantColorList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VideoHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SceneData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DominantColorList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

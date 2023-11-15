@@ -3,10 +3,11 @@
 
 VideoHandler::VideoHandler() {
 	filename = "";
-	scenes = {};
+	data = DominantColorList();
 }
 
-int rgbToHue(int _red, int _blue, int _green) {
+int rgbToHue(int _red, int _green, int _blue) {
+	//return 0.257 * _red + 0.504 * _green + 0.098 * _blue + 16;
 	double b = double(_blue) / 255;
 	double g = double(_green) / 255;
 	double r = double(_red) / 255;
@@ -42,98 +43,30 @@ void VideoHandler::processFrames() {
 	Mat frame;
 	if (!capture.isOpened())
 		throw "Error when reading video";
-	
-	scenes.push_back(SceneData::SceneData());
-	scenes.back().setStartFrameIndex(0);
-	int* prevImg = nullptr;
-
-	// TEMP-----------------------
-	int tempMax = 0;
-	namedWindow("w", 1);
 
     for (; ; ){
         capture >> frame;
         if (frame.empty())
             break;
-
-		int* currentImg = new int[Width*Height/4];
-		for (int i = 0; i < Width*Height/4; ++i) currentImg[i] = 0;
-		int totalDeviation = 0;
-
-		for (int r = 1; r < frame.rows; r+=3) {
-			for (int c = 1; c < frame.cols; c+=3) {
+		
+		int* hueHist = new int[360];
+		int maxHue = -1;
+		int maxHueOccurence = -1;
+		for (int i = 0; i < 360; ++i) hueHist[i] = 0;
+		for (int r = 1; r < frame.rows; ++r) {
+			for (int c = 1; c < frame.cols; ++c) {
 				Vec3b BGR_pixel = frame.at<Vec3b>(r, c);
-				currentImg[r/2 * Height/2 + c/2] = rgbToHue(BGR_pixel[2], BGR_pixel[1], BGR_pixel[0]);
-				
-				if (prevImg != nullptr) {
-					int minDeviation = maxDeviation+1;
-					for (int rr = r - 1; rr < r + 2; ++rr) {
-						for (int cc = c - 1; cc < c + 2; ++cc) {
-							Vec3b current_BGR_pixel = frame.at<Vec3b>(rr, cc);
-							int currentHue = rgbToHue(BGR_pixel[2], BGR_pixel[1], BGR_pixel[0]);
-							int subDeviation = min(
-								abs(prevImg[r / 2 * Height / 2 + c / 2] - currentHue),
-								360 - abs(prevImg[r / 2 * Height / 2 + c / 2] - currentHue));
-							minDeviation = min(minDeviation, subDeviation);
-						}
-					}
-
-					totalDeviation += minDeviation;
+				int hue = rgbToHue(BGR_pixel[2], BGR_pixel[1], BGR_pixel[0]);
+				++hueHist[hue];
+				if (hueHist[hue] > maxHueOccurence) {
+					maxHue = hue;
+					maxHueOccurence = hueHist[hue];
 				}
 			}
 		}
 
-		tempMax = max(totalDeviation, tempMax);
-
-		if (prevImg == nullptr) {
-			scenes.back().addFrame(currentImg); 
-			prevImg = currentImg;
-
-			// TEMP-----------------------
-			imshow("w", frame);
-			waitKey(20); // waits to display frame
-			scenes.back().setFirstFrame(frame.clone());
-		}
-		else {
-			/*
-			int totalDeviation = 0;
-			for (int i = 0; i < Width*Height; ++i) {
-				totalDeviation += min(abs(prevImg[i] - currentImg[i]), 360 - abs(prevImg[i] - currentImg[i]));
-			}
-
-			tempMax = max(totalDeviation, tempMax);
-			*/
-			if (totalDeviation > maxDeviation) {
-				int startIndex = scenes.back().getFrameCount() + scenes.back().getStartFrameIndex();
-				scenes.push_back(SceneData::SceneData());
-				scenes.back().setStartFrameIndex(startIndex);
-				
-				// TEMP-----------------------
-				imshow("w", frame);
-				waitKey(20); // waits to display frame
-				scenes.back().setFirstFrame(frame.clone());
-				printf("Causing Deviation: %d\n", totalDeviation);
-			}
-			scenes.back().addFrame(currentImg);
-			
-
-			delete[] prevImg;
-			prevImg = currentImg;
-		}
+		data.addDominantHue(maxHue, maxHueOccurence);
+		delete[] hueHist;
     }
-	// TEMP-----------------------
-	printf("---------------------------------------------------\nMAX DEVIATION: %d\n", tempMax);
-}
-
-void VideoHandler::collapseShortClips() {
-	std::list<SceneData> newScenes = {};
-	for (SceneData i : scenes) {
-		if (newScenes.empty()) newScenes.push_back(i);
-		else if (i.getFrameCount() < 5) {
-			newScenes.back().mergeSceneData(i);
-		}
-		else newScenes.push_back(i);
-	}
-
-	scenes = newScenes;
+	
 }
