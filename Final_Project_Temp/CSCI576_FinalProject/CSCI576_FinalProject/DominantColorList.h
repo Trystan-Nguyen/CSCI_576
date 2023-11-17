@@ -3,33 +3,44 @@
 #include <vector>
 #include <string>
 #include <tuple>
-
+#include <cmath>
 #include <iostream>
 #include <fstream>
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
+using namespace cv;
 
 using namespace std;
 class DominantColorList
 {
 private:
-	vector<tuple<int, int>> hueOccurence;
+	string srcVideo;
+	Mat firstFrame;
+
+	vector<int*> validHues;
 	int* dominantHues;
-	double differenceTolerance = 0.15;
 
 public:
 	DominantColorList();
-	void addDominantHue(int h, int o);
+	void addDominantHue(vector<tuple<int, int>> dominantColors);
 
 	int* getHueInformation() { return dominantHues; };
 
-	int getHueOccurenceSize() { return hueOccurence.size(); };
-	tuple<int, int> getFirstHueOccurence() { return hueOccurence.front(); };
-	tuple<int, int> getLastHueOccurence() { return hueOccurence.back(); };
-	vector<tuple<int, int>>* getHueOccurence() { return &hueOccurence; };
+	vector<int*>* getHueVec() { return &validHues; };
+	int checkHueSpectrum();
 	int containsSubset(DominantColorList* subsample);
-	bool checkIfValidSubset(int offset, vector<tuple<int, int>>* subsample);
+	bool checkIfValidSubset(int offset, vector<int*>* subsample);
 	
 
 	void dumpData(string fileInput);
 	void populateData(string fileInput);
+	void setSrcVideo(string s) { srcVideo = s; };
+	
+	void findFirstFrame(int i);
+	Mat getFirstFrame();
+
+	bool compareFrames(Mat frameCmp);
 };
 

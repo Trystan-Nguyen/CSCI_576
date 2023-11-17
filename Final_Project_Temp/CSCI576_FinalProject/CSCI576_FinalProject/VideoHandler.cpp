@@ -6,7 +6,7 @@ VideoHandler::VideoHandler() {
 	data = DominantColorList();
 }
 
-int rgbToHue(int _red, int _green, int _blue) {
+int rgbToHue_(int _red, int _green, int _blue) {
 	//return 0.257 * _red + 0.504 * _green + 0.098 * _blue + 16;
 	double b = double(_blue) / 255;
 	double g = double(_green) / 255;
@@ -50,22 +50,25 @@ void VideoHandler::processFrames() {
             break;
 		
 		int* hueHist = new int[360];
-		int maxHue = -1;
-		int maxHueOccurence = -1;
 		for (int i = 0; i < 360; ++i) hueHist[i] = 0;
 		for (int r = 1; r < frame.rows; ++r) {
 			for (int c = 1; c < frame.cols; ++c) {
 				Vec3b BGR_pixel = frame.at<Vec3b>(r, c);
-				int hue = rgbToHue(BGR_pixel[2], BGR_pixel[1], BGR_pixel[0]);
+				int hue = rgbToHue_(BGR_pixel[2], BGR_pixel[1], BGR_pixel[0]);
 				++hueHist[hue];
-				if (hueHist[hue] > maxHueOccurence) {
-					maxHue = hue;
-					maxHueOccurence = hueHist[hue];
-				}
 			}
 		}
+		vector<tuple<int, int>> dominantColors = {};
+		for (int j = 0; j < 3; ++j) {
+			tuple<int, int> max1 = { -1,-1 };
+			for (int i = 0; i < 360; ++i) {
+				if (hueHist[i] > get<1>(max1)) max1 = { i, hueHist[i] };
+			}
+			hueHist[get<0>(max1)] = -1;
+			dominantColors.push_back(max1);
+		}
 
-		data.addDominantHue(maxHue, maxHueOccurence);
+		data.addDominantHue(dominantColors);
 		delete[] hueHist;
     }
 	

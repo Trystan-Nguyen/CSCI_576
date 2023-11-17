@@ -132,13 +132,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AudioHandler.cpp" />
     <ClCompile Include="CSCI576_FinalProject.cpp" />
     <ClCompile Include="DominantColorList.cpp" />
+    <ClCompile Include="MultiMediaSearcher.cpp" />
     <ClCompile Include="SceneData.cpp" />
     <ClCompile Include="VideoHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AudioFile.h" />
+    <ClInclude Include="AudioHandler.h" />
     <ClInclude Include="DominantColorList.h" />
+    <ClInclude Include="MultiMediaSearcher.h" />
     <ClInclude Include="SceneData.h" />
     <ClInclude Include="VideoHandler.h" />
   </ItemGroup>
