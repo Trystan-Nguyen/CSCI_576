@@ -34,6 +34,7 @@ class MediaPlayerApp(tk.Tk):
     def create_widgets(self):
         self.media_canvas = tk.Canvas(self, bg="black", width=800, height=400)
         self.media_canvas.pack(pady=10, fill=tk.BOTH, expand=True)
+        '''
         self.time_label = tk.Label(
             self,
             text="00:00:00 / 00:00:00",
@@ -42,9 +43,20 @@ class MediaPlayerApp(tk.Tk):
             bg="#f0f0f0",
         )
         self.time_label.pack(pady=5)
+        '''
         self.control_buttons_frame = tk.Frame(self, bg="#f0f0f0")
         self.control_buttons_frame.pack(pady=5)
         self.stop_button = tk.Button(
+            self.control_buttons_frame,
+            text="ToQuery",
+            font=("Arial", 12, "bold"),
+            bg="grey",
+            fg="white",
+            command=self.query,
+        )
+        self.stop_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.play_button = tk.Button(
             self.control_buttons_frame,
             text="Reset",
             font=("Arial", 12, "bold"),
@@ -52,35 +64,27 @@ class MediaPlayerApp(tk.Tk):
             fg="white",
             command=self.stop,
         )
-        self.stop_button.pack(side=tk.LEFT, padx=5, pady=5)
-        '''
-        self.play_button = tk.Button(
-            self.control_buttons_frame,
-            text="Play",
-            font=("Arial", 12, "bold"),
-            bg="#4CAF50",
-            fg="white",
-            command=self.play_video,
-        )
         self.play_button.pack(side=tk.LEFT, padx=10, pady=5)
-        '''
+
         self.pause_button = tk.Button(
             self.control_buttons_frame,
             text="Pause",
             font=("Arial", 12, "bold"),
-            bg="#FF9800",
+            bg="grey",
             fg="white",
             command=self.pause_video,
         )
         self.pause_button.pack(side=tk.LEFT, pady=5)
+        '''
         self.progress_bar = VideoProgressBar(
             self, self.set_video_position, bg="#e0e0e0", highlightthickness=0
         )
         self.progress_bar.pack(fill=tk.X, padx=10, pady=5)
+        '''
 
     def select_file(self, file_path):
         self.current_file = file_path
-        self.time_label.config(text="00:00:00 / " + self.get_duration_str())
+        #self.time_label.config(text="00:00:00 / " + self.get_duration_str())
         self.play_video()
 
     def get_duration_str(self):
@@ -120,6 +124,21 @@ class MediaPlayerApp(tk.Tk):
                 self.video_paused = True
                 self.pause_button.config(text="Resume")
 
+    def query(self):
+        if self.playing_video:
+            self.media_player.set_position(self.start)
+            if not self.video_paused:
+                self.media_player.pause()
+                self.video_paused = True
+                self.pause_button.config(text="Resume")
+        '''
+        if self.playing_video:
+            self.media_player.stop()
+            self.playing_video = False
+        '''
+        
+        #self.time_label.config(text="00:00:00 / " + self.get_duration_str())
+
     def stop(self):
         if self.playing_video:
             if not self.video_paused:
@@ -131,8 +150,8 @@ class MediaPlayerApp(tk.Tk):
             self.media_player.stop()
             self.playing_video = False
         '''
-        self.media_player.set_position(self.start)
-        self.time_label.config(text="00:00:00 / " + self.get_duration_str())
+        self.media_player.set_position(0)
+        #self.time_label.config(text="00:00:00 / " + self.get_duration_str())
 
     def set_video_position(self, value):
         if self.playing_video:
@@ -175,11 +194,11 @@ class VideoProgressBar(tk.Scale):
 
 if __name__ == "__main__":
     program,src_video,index,total_frames = sys.argv
-    index = int(index)
+    index = int(index)-2
     total_frames = int(total_frames)
 
     app = MediaPlayerApp()
-    app.update_video_progress()
+    #app.update_video_progress()
 
     app.set_query_frame(index/total_frames)
     app.select_file(src_video)
