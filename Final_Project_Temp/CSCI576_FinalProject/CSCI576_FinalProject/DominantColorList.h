@@ -17,6 +17,7 @@ class DominantColorList
 {
 private:
 	string srcVideo;
+	int numUnusedHues;
 	Mat firstFrame;
 
 	vector<int*> validHues;
@@ -29,18 +30,18 @@ public:
 	int* getHueInformation() { return dominantHues; };
 
 	vector<int*>* getHueVec() { return &validHues; };
-	int checkHueSpectrum();
+	bool checkHueSpectrum(DominantColorList* subsample);
 	int containsSubset(DominantColorList* subsample);
 	bool checkIfValidSubset(int offset, vector<int*>* subsample);
-	
+
 
 	void dumpData(string fileInput);
 	void populateData(string fileInput);
 	void setSrcVideo(string s) { srcVideo = s; };
-	
-	void findFirstFrame(int i);
-	Mat getFirstFrame();
 
-	bool compareFrames(Mat frameCmp);
+	Mat findFirstFrame(int i);
+
+	int getNumUnusedHues() { return numUnusedHues; };
+	bool acceptableColorIndex(int i, DominantColorList* sample);
 };
 

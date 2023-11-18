@@ -21,23 +21,20 @@ void AudioHandler::processAudio() {
 }
 
 int AudioHandler::compareAudio(AudioHandler* sample) {
-	vector<double> subsignal = *sample->getAudioData();
+	vector<double>* subaudio = sample->getAudioData();
 	double minDifference = 999999;
 	int index = -1;
 
-	for (int i = 0; i < audioByFrame.size() - subsignal.size() + 1; ++i) {
+	for (int i = 0; i < audioByFrame.size() - subaudio->size() + 1; ++i) {
 		double diff = 0;
-		for (int j = 0; j < subsignal.size(); ++j) {
-			diff += abs(audioByFrame[i + j] - subsignal[j]);
+		for (int j = 0; j < subaudio->size(); ++j) {
+			diff += abs(audioByFrame[i + j] - subaudio->at(j));
 		}
 		if (diff < minDifference) {
 			index = i;
 			minDifference = diff;
 		}
-		printf("%d %f\n", i, diff);
 	}
-
-	printf("%d %f\n", index, minDifference);
 	return index;
 }
 

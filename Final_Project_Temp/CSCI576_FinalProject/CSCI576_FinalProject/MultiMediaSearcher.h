@@ -1,14 +1,17 @@
 #pragma once
 #include "VideoHandler.h"
+#include "AudioHandler.h"
 
 class MultiMediaSearcher
 {
 private:
-	String queryVideo;
-	String queryAudio;
+	string queryVideo;
+	string queryAudio;
 
-	String result;
+	string result;
 	int index;
+	int totalFrames;
+	Mat firstFrame;
 
 public:
 	MultiMediaSearcher();
@@ -16,5 +19,10 @@ public:
 	void setAudioFilePath(string s) { queryAudio = s; };
 	void search();
 
-};
+	int getIndex() { return index; };
+	int getTotalFrames() { return totalFrames; };
+	string getSrcVideo() { return result; };
 
+	Mat getTargetFrame() { return firstFrame; };
+
+};

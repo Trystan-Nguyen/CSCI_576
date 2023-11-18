@@ -6,64 +6,62 @@ MultiMediaSearcher::MultiMediaSearcher() {
 
 	result = "";
 	index = -1;
+	totalFrames = 0;
 }
 
 void MultiMediaSearcher::search() {
-	namedWindow("FrameStartRef", 1);
-	/*
-	printf("Start Load Src\n");
-	VideoHandler videoObjSrc = VideoHandler::VideoHandler();
-	videoObjSrc.setFileName("Data/Videos/video11.mp4");
-	videoObjSrc.processFrames();
-	DominantColorList Signal = videoObjSrc.getProcessedData();
-	printf("End Load Src\n");
-	Signal.dumpData("PreprocessData/video11");
-	return;
-	//*/
-	
-	//*
-	printf("Start Load Query\n");
-	string queryFilePath = "Data/Queries/";
-	string query = "video1_1"; 
+	VideoHandler videoObj = VideoHandler::VideoHandler();
+	videoObj.setFileName(queryVideo);
+	videoObj.processFrames();
+	DominantColorList subVideo = videoObj.getProcessedData();
 
-	VideoHandler videoObj = VideoHandler::VideoHandler(); 
-	videoObj.setFileName(queryFilePath + query + ".mp4");
-	videoObj.processFrames(); 
-	
-	DominantColorList subsignal = videoObj.getProcessedData(); 
-	subsignal.setSrcVideo(queryFilePath + "audios/video" + query + ".wav");
-	subsignal.findFirstFrame(0); 
+	AudioHandler subAudio = AudioHandler::AudioHandler();
+	subAudio.setFilePath(queryAudio);
+	subAudio.processAudio();
 
 
-	printf("End Load Query\n"); 
-	//subsignal.dumpData("PreprocessData/test_query");
-	//*/
+	string preprocessPath = "PreprocessData/video";
+	string srcVideoPath = "Data/Videos/video";
 
-	/**
-	printf("\n\n----------------------------------------------------------\n\n");
-	string filePath = "PreprocessData/video";
-	string fileSrc = "Data/Videos/video";
-	//for (int i = 1; i < 12; ++i) {
-		int i = 1;
-		DominantColorList signal = DominantColorList();
-		string f = filePath + std::to_string(i);
-		signal.populateData(f);
-		signal.setSrcVideo(fileSrc + std::to_string(i) + ".mp4");
+	for (int i = 1; i < 12; ++i) {
+	//int i = 6;
+		string f = preprocessPath + std::to_string(i);
 
+		DominantColorList srcVideo = DominantColorList();
+		srcVideo.setSrcVideo(srcVideoPath + std::to_string(i) + ".mp4");
+		srcVideo.populateData(f);
 
-		int test = signal.containsSubset(&subsignal);
-		printf("RESULT of %d: %d\n", i, test);
+		AudioHandler srcAudio = AudioHandler::AudioHandler();
+		srcAudio.populateData(f);
 
-		if (test != -1) {
-			result = "Data/Videos/video" + std::to_string(i) + ".mp4";
-			index = test;
-			VideoCapture capture(result);
-			Mat frame;
-			capture.set(CAP_PROP_POS_FRAMES, test);
-			capture >> frame;
-			imshow("FrameStartRef", frame);
-			waitKey();
+		if (srcVideo.checkHueSpectrum(&subVideo)) {
+			if (srcVideo.getNumUnusedHues() > 200) {
+				int temp_index = srcAudio.compareAudio(&subAudio);
+				if (srcVideo.acceptableColorIndex(temp_index, &subVideo)){
+					index = temp_index;
+					totalFrames = srcVideo.getHueVec()->size();
+					result = srcVideoPath + to_string(i) + ".mp4";
+				
+					firstFrame = srcVideo.findFirstFrame(index);
+
+					return;
+				}
+			}
+			else {
+				int temp_index = srcVideo.containsSubset(&subVideo);
+				if (temp_index != -1) {
+					index = temp_index;
+					totalFrames = srcVideo.getHueVec()->size();
+					result = srcVideoPath + to_string(i) + ".mp4";
+
+					firstFrame = srcVideo.findFirstFrame(index);
+
+					return;
+				}
+			}
 		}
-	//}
-	//*/
+	}//
 }
+
+	
+

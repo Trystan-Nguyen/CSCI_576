@@ -51,8 +51,8 @@ void VideoHandler::processFrames() {
 		
 		int* hueHist = new int[360];
 		for (int i = 0; i < 360; ++i) hueHist[i] = 0;
-		for (int r = 1; r < frame.rows; ++r) {
-			for (int c = 1; c < frame.cols; ++c) {
+		for (int r = 1; r < frame.rows; r+=2) {
+			for (int c = 1; c < frame.cols; c+=2) {
 				Vec3b BGR_pixel = frame.at<Vec3b>(r, c);
 				int hue = rgbToHue_(BGR_pixel[2], BGR_pixel[1], BGR_pixel[0]);
 				++hueHist[hue];
