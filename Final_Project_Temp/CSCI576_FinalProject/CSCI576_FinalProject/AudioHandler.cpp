@@ -34,6 +34,7 @@ int AudioHandler::compareAudio(AudioHandler* sample) {
 			index = i;
 			minDifference = diff;
 		}
+		if (diff > minDifference) continue;
 	}
 	return index;
 }
