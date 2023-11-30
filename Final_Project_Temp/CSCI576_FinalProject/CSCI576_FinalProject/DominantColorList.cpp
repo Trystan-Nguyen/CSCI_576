@@ -117,26 +117,28 @@ void DominantColorList::dumpData(string filepath) {
 	}
 	of2.close();
 }
-void DominantColorList::populateData(string filepath) {
-	std::ifstream if1(filepath + ".hue");
+void DominantColorList::populateDataHue(string filepath) {
+	std::ifstream ifs(filepath + ".hue");
 	int hueExist;
 	int i = 0;
-	while(if1 >> hueExist){
+	while(ifs >> hueExist){
 		dominantHues[i++] = hueExist;
 		if (hueExist == 0) ++numUnusedHues;
 	}
-	if1.close();
-	
-	std::ifstream if2(filepath + ".vec");
+	ifs.close();
+}
+
+void DominantColorList::populateDataVec(string filepath) {
+	std::ifstream ifs(filepath + ".vec");
 	int a; int b; int c;
-	while (if2 >> a >> b >> c){
+	while (ifs >> a >> b >> c) {
 		int* colors = new int[3];
 		colors[0] = a;
 		colors[1] = b;
 		colors[2] = c;
 		validHues.push_back(colors);
 	}
-	if2.close();
+	ifs.close();
 }
 
 Mat DominantColorList::findFirstFrame(int i) {
