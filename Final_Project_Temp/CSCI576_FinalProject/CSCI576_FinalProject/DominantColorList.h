@@ -36,7 +36,8 @@ public:
 
 
 	void dumpData(string fileInput);
-	void populateData(string fileInput);
+	void populateDataHue(string fileInput);
+	void populateDataVec(string fileInput);
 	void setSrcVideo(string s) { srcVideo = s; };
 
 	Mat findFirstFrame(int i);

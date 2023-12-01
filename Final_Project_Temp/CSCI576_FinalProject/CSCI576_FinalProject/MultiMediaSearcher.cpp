@@ -29,14 +29,14 @@ void MultiMediaSearcher::search() {
 
 		DominantColorList srcVideo = DominantColorList();
 		srcVideo.setSrcVideo(srcVideoPath + std::to_string(i) + ".mp4");
-		srcVideo.populateData(f);
-
-		AudioHandler srcAudio = AudioHandler::AudioHandler();
-		srcAudio.populateData(f);
+		srcVideo.populateDataHue(f);
 
 		if (srcVideo.checkHueSpectrum(&subVideo)) {
+			srcVideo.populateDataVec(f);
 			//if (srcVideo.getNumUnusedHues() > 200) {
 			if (i==1 || i==6 || i==9 || i ==10) {
+				AudioHandler srcAudio = AudioHandler::AudioHandler();
+				srcAudio.populateData(f);
 				int temp_index = srcAudio.compareAudio(&subAudio);
 				if (srcVideo.acceptableColorIndex(temp_index, &subVideo)){
 					index = temp_index;
