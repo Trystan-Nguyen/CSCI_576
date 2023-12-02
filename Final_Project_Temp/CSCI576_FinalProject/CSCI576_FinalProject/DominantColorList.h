@@ -40,7 +40,7 @@ public:
 	void populateDataVec(string fileInput);
 	void setSrcVideo(string s) { srcVideo = s; };
 
-	Mat findFirstFrame(int i);
+	//Mat findFirstFrame(int i);
 
 	int getNumUnusedHues() { return numUnusedHues; };
 	bool acceptableColorIndex(int i, DominantColorList* sample);

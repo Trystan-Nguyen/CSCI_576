@@ -49,16 +49,19 @@ void DominantColorList::addDominantHue(vector<tuple<int, int>> dominantColors) {
 	validHues.push_back(colors);
 }
 
-bool isValidHue(int* colorSet1, int* colorSet2) {
+bool isValidHue(int* colorSet1, int* colorSet2, int numUnusedHues) {
 	int colorDiff = 360;
+	int numSame = 0;
 	for (int i = 0; i < 3; ++i) {
 		for (int j = 0; j < 3; ++j) {
 			int diff = abs(colorSet1[i] - colorSet2[j]);
 			diff = min(diff, 360 - diff);
 			colorDiff = min(colorDiff, diff);
+			if (diff == 0) ++numSame;
 		}
 	}
-	return colorDiff == 0;
+	if (numUnusedHues > 200) return numSame > 1;
+	else return colorDiff == 0;
 }
 
 bool DominantColorList::checkHueSpectrum(DominantColorList* subsample) {
@@ -73,22 +76,14 @@ bool DominantColorList::checkHueSpectrum(DominantColorList* subsample) {
 }
 
 int DominantColorList::containsSubset(DominantColorList* subsample) {
-	int* subSampleDominantHues = subsample->getHueInformation();
-	for (int i = 0; i < 360; ++i) {
-		if (subSampleDominantHues[i] != 0 && dominantHues[i] == 0) {
-			//printf("\n\nEND EARLY at %d\n\n", i);
-			return -1;
-		}
-	}
-
 	vector<int*> subSignal = *subsample->getHueVec();
 	for (int i = 0; i < validHues.size() - subSignal.size() + 1; ++i) {
-		if (isValidHue(validHues[i], subSignal.front()) && 
-			isValidHue(validHues[i + subSignal.size() - 1], subSignal.back())) {
+		if (isValidHue(validHues[i], subSignal.front(), numUnusedHues) &&
+			isValidHue(validHues[i + subSignal.size() - 1], subSignal.back(), numUnusedHues)) {
 			//printf("CHECK ENTRY: %d\n\n", i);
 			
 			if (checkIfValidSubset(i, &subSignal)) {
-					return i;
+				return i-1;
 			}
 		}
 	}
@@ -97,7 +92,7 @@ int DominantColorList::containsSubset(DominantColorList* subsample) {
 
 bool DominantColorList::checkIfValidSubset(int offset, vector<int*>* subSignal) {
 	for (int i = 0; i < subSignal->size(); ++i) {
-		if (!isValidHue(validHues[offset + i], (*subSignal)[i])) {
+		if (!isValidHue(validHues[offset + i], (*subSignal)[i], numUnusedHues)) {
 			return false;
 		}
 	}
@@ -140,7 +135,7 @@ void DominantColorList::populateDataVec(string filepath) {
 	}
 	ifs.close();
 }
-
+/*
 Mat DominantColorList::findFirstFrame(int i) {
 	VideoCapture capture(srcVideo);
 	Mat frame;
@@ -149,9 +144,10 @@ Mat DominantColorList::findFirstFrame(int i) {
 	firstFrame = frame.clone();
 	return firstFrame;
 }
+*/
 
 bool DominantColorList::acceptableColorIndex(int i, DominantColorList* sample) {
 	vector<int*>subSignal = *(sample->getHueVec());
-	return isValidHue(validHues[i], subSignal.front()) &&
-		isValidHue(validHues[i + subSignal.size() - 1], subSignal.back());
+	return isValidHue(validHues[i], subSignal.front(), numUnusedHues) &&
+		isValidHue(validHues[i + subSignal.size() - 1], subSignal.back(), numUnusedHues);
 }

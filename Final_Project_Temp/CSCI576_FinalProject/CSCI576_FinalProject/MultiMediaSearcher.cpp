@@ -34,7 +34,7 @@ void MultiMediaSearcher::search() {
 		if (srcVideo.checkHueSpectrum(&subVideo)) {
 			srcVideo.populateDataVec(f);
 			//if (srcVideo.getNumUnusedHues() > 200) {
-			if (i==1 || i==6 || i==9 || i ==10) {
+			if (i==1 || i==6 || i==9 || i ==10 || i==13 || i==14) {
 				AudioHandler srcAudio = AudioHandler::AudioHandler();
 				srcAudio.populateData(f);
 				int temp_index = srcAudio.compareAudio(&subAudio);
@@ -43,7 +43,7 @@ void MultiMediaSearcher::search() {
 					totalFrames = srcVideo.getHueVec()->size();
 					result = srcVideoPath + to_string(i) + ".mp4";
 				
-					firstFrame = srcVideo.findFirstFrame(index);
+					//firstFrame = srcVideo.findFirstFrame(index);
 
 					return;
 				}
@@ -55,7 +55,7 @@ void MultiMediaSearcher::search() {
 					totalFrames = srcVideo.getHueVec()->size();
 					result = srcVideoPath + to_string(i) + ".mp4";
 
-					firstFrame = srcVideo.findFirstFrame(index);
+					//firstFrame = srcVideo.findFirstFrame(index);
 
 					return;
 				}

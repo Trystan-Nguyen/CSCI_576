@@ -22,7 +22,7 @@ void AudioHandler::processAudio() {
 
 int AudioHandler::compareAudio(AudioHandler* sample) {
 	vector<double>* subaudio = sample->getAudioData();
-	double minDifference = 999999;
+	double minDifference = 25000;
 	int index = -1;
 
 	for (int i = 0; i < audioByFrame.size() - subaudio->size() + 1; ++i) {
@@ -36,6 +36,7 @@ int AudioHandler::compareAudio(AudioHandler* sample) {
 		}
 		if (diff > minDifference) continue;
 	}
+	//printf("Diff = %f\n", minDifference);
 	return index;
 }
 
