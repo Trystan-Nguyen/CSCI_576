@@ -194,8 +194,10 @@ class VideoProgressBar(tk.Scale):
 
 if __name__ == "__main__":
     program,src_video,index,total_frames = sys.argv
-    print(f'\n\nStart Time: {timedelta(seconds=round(int(index)/30))}')
-    print(f'Start Frame: {int(index)}\n')
+    #print(f'\n\nSource Video: {src_video}')
+    print(f'\tStart Time: {timedelta(seconds=int(index)/30)}')
+    #print(f'\tStart Frame: {int(index)}\n\n')
+    
     index = int(index)-2
     total_frames = int(total_frames)
 

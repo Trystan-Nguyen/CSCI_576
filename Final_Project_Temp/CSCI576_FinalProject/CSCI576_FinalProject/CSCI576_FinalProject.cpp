@@ -27,16 +27,30 @@ int main(int argc, char* argv[])
 		printf("End %d\n\n", i);
 	}
 	return 0;
-	//*/
 	
+	/* Test other queries
+	DominantColorList qVideo = DominantColorList();
+	qVideo.populateDataVec("TestFolder/testVideo");
+
+	DominantColorList srcVideo = DominantColorList();
+	srcVideo.populateDataHue("PreprocessData/video20");
+	srcVideo.populateDataVec("PreprocessData/video20");
+
+	int result = srcVideo.containsSubset(&qVideo);
+	printf("Result: %d\n", result);
+
+	return 0;
+	//*/
+	//*/
+
 	/** Quick Test
-	string query = "11_1";
+	string query = "3_1";
 	MultiMediaSearcher dataGetter = MultiMediaSearcher();
 	dataGetter.setVideoFilePath("Data/Queries/video" + query + ".mp4");
 	dataGetter.setAudioFilePath("Data/Queries/audios/video" + query + ".wav");
 	dataGetter.search();
 	//*/
-	
+
 	//* Commandline Args
 	string queryVideo = argv[1];
 	string queryAudio = argv[2];
@@ -52,6 +66,9 @@ int main(int argc, char* argv[])
 	string src = dataGetter.getSrcVideo();
 	
 	if (i != -1) {
+		printf("\n\nSource Video: %s\n", src.c_str());
+		printf("\tStart Frame: %d\n", i);
+
 		string cmd = "python MediaPlayer.py " + src + " " + to_string(i) + " " + to_string(tf);
 		system(cmd.c_str());
 	}

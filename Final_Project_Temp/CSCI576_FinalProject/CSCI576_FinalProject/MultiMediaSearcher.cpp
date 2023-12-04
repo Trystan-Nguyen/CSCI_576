@@ -34,7 +34,8 @@ void MultiMediaSearcher::search() {
 		if (srcVideo.checkHueSpectrum(&subVideo)) {
 			srcVideo.populateDataVec(f);
 			//if (srcVideo.getNumUnusedHues() > 200) {
-			if (i==1 || i==6 || i==9 || i ==10 || i==13 || i==14) {
+			if (i==1 || i==6 || i==9 || i ==10 || i==13 || i==14 || 
+				i==16 || i==18) {
 				AudioHandler srcAudio = AudioHandler::AudioHandler();
 				srcAudio.populateData(f);
 				int temp_index = srcAudio.compareAudio(&subAudio);
